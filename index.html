@@ -265,20 +265,38 @@
                 // Parse the text
                 const parsed = parseStatement(text);
                 
-                // Calculate remaining term if we have payment breakdown
+                // Calculate remaining term and detect extra payments
                 let calculatedTerm = null;
+                let detectedExtraPayment = 0;
+                
                 if (parsed.principal && parsed.rate && parsed.currentPrincipalPayment && parsed.currentInterestPayment) {
+                    const monthlyRate = parsed.rate / 100 / 12;
+                    const totalPayment = parsed.currentPrincipalPayment + parsed.currentInterestPayment;
+                    
                     calculatedTerm = calculateRemainingTerm(
                         parsed.principal,
-                        parsed.rate / 100 / 12,
-                        parsed.currentPrincipalPayment + parsed.currentInterestPayment
+                        monthlyRate,
+                        totalPayment
                     );
+                    
+                    // Calculate what the STANDARD principal payment should be
+                    // Standard = Total Payment - Interest
+                    // Where Interest = Balance × Monthly Rate
+                    const expectedInterest = parsed.principal * monthlyRate;
+                    const standardPrincipal = totalPayment - expectedInterest;
+                    
+                    // Detect extra payment
+                    if (parsed.currentPrincipalPayment > standardPrincipal + 50) {
+                        // There's an extra payment (allow $50 buffer for rounding)
+                        detectedExtraPayment = Math.round(parsed.currentPrincipalPayment - standardPrincipal);
+                    }
                 }
                 
                 if (parsed.principal) document.getElementById('principal').value = parsed.principal;
                 if (parsed.rate) document.getElementById('rate').value = parsed.rate;
                 if (calculatedTerm) document.getElementById('years').value = (calculatedTerm / 12).toFixed(1);
                 if (parsed.escrow) document.getElementById('escrow').value = parsed.escrow;
+                if (detectedExtraPayment > 0) document.getElementById('extra').value = detectedExtraPayment;
                 
                 document.getElementById('upload-status').classList.add('hidden');
                 document.getElementById('extracted-preview').classList.remove('hidden');
@@ -290,6 +308,7 @@
                 if (parsed.escrow) extractedInfo += `<div><strong>Escrow:</strong> $${parsed.escrow.toLocaleString()}</div>`;
                 if (parsed.currentPrincipalPayment) extractedInfo += `<div><strong>This Month Principal:</strong> $${parsed.currentPrincipalPayment.toLocaleString()}</div>`;
                 if (parsed.currentInterestPayment) extractedInfo += `<div><strong>This Month Interest:</strong> $${parsed.currentInterestPayment.toLocaleString()}</div>`;
+                if (detectedExtraPayment > 0) extractedInfo += `<div class="col-span-2 text-green-600 font-semibold"><strong>✓ Extra Payment Detected:</strong> $${detectedExtraPayment.toLocaleString()}/month</div>`;
                 extractedInfo += `</div>`;
                 extractedInfo += `<p class="mt-2 text-xs">Review and adjust the values below if needed.</p>`;
                 
@@ -369,26 +388,56 @@
             }
             
             // Try to detect current payment breakdown from recent transaction
-            // This helps calculate remaining term
+            // Look in TRANSACTION ACTIVITY or similar sections for most recent payment
             const lines = originalText.split('\n');
+            
+            // Strategy 1: Look for transaction activity table (most accurate)
+            // Pattern: MORTGAGE PAYMENT [dates] [amounts...] Principal Interest Escrow
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
                 
-                // Look for payment transaction with Principal and Interest breakdown
-                // Common patterns: "Principal $X Interest $Y" or table rows
-                const principalMatch = line.match(/principal[:\s]+\$?([\d,]+\.?\d*)/i);
-                const interestMatch = line.match(/interest[:\s]+\$?([\d,]+\.?\d*)/i);
-                
-                if (principalMatch && interestMatch) {
-                    const principalPayment = parseFloat(principalMatch[1].replace(/,/g, ''));
-                    const interestPayment = parseFloat(interestMatch[1].replace(/,/g, ''));
+                if (/mortgage\s+payment/i.test(line) || /payment\s+posted/i.test(line)) {
+                    // Extract all numbers from this line
+                    const numbers = line.match(/\$?([\d,]+\.?\d+)/g);
+                    if (numbers && numbers.length >= 3) {
+                        // Try to find principal and interest
+                        // Typically: [total payment] [principal] [interest] [escrow]
+                        for (let j = 1; j < numbers.length - 1; j++) {
+                            const principal = parseFloat(numbers[j].replace(/[$,]/g, ''));
+                            const interest = parseFloat(numbers[j + 1].replace(/[$,]/g, ''));
+                            
+                            // Sanity check: both should be > 0 and < $10k, and principal usually > interest
+                            if (principal > 0 && interest > 0 && 
+                                principal < 10000 && interest < 10000 &&
+                                principal > interest * 0.5) {  // Allow for early in loan where interest might be higher
+                                parsed.currentPrincipalPayment = principal;
+                                parsed.currentInterestPayment = interest;
+                                break;
+                            }
+                        }
+                        if (parsed.currentPrincipalPayment) break;
+                    }
+                }
+            }
+            
+            // Strategy 2: Look for labeled breakdown (fallback)
+            if (!parsed.currentPrincipalPayment) {
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
                     
-                    // Sanity check
-                    if (principalPayment > 0 && interestPayment > 0 && 
-                        principalPayment < 10000 && interestPayment < 10000) {
-                        parsed.currentPrincipalPayment = principalPayment;
-                        parsed.currentInterestPayment = interestPayment;
-                        break;
+                    const principalMatch = line.match(/principal[:\s]+\$?([\d,]+\.?\d*)/i);
+                    const interestMatch = line.match(/interest[:\s]+\$?([\d,]+\.?\d*)/i);
+                    
+                    if (principalMatch && interestMatch) {
+                        const principalPayment = parseFloat(principalMatch[1].replace(/,/g, ''));
+                        const interestPayment = parseFloat(interestMatch[1].replace(/,/g, ''));
+                        
+                        if (principalPayment > 0 && interestPayment > 0 && 
+                            principalPayment < 10000 && interestPayment < 10000) {
+                            parsed.currentPrincipalPayment = principalPayment;
+                            parsed.currentInterestPayment = interestPayment;
+                            break;
+                        }
                     }
                 }
             }
