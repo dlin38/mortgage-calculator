@@ -262,21 +262,27 @@
         function parseStatement(text) {
             const parsed = {};
             
-            // Clean text
-            text = text.replace(/,/g, '');
+            // Keep original text for comma-aware parsing
+            const originalText = text;
             
-            // Try to find principal balance
+            // Try to find principal balance (with commas)
             const principalPatterns = [
-                /principal\s+balance[:\s]+\$?([\d.]+)/i,
-                /remaining\s+balance[:\s]+\$?([\d.]+)/i,
-                /current\s+balance[:\s]+\$?([\d.]+)/i,
-                /balance[:\s]+\$?([\d.]+)/i
+                /outstanding\s+principal\s+balance[:\s]+\$?([\d,]+\.?\d*)/i,
+                /principal\s+balance[:\s]+\$?([\d,]+\.?\d*)/i,
+                /unpaid\s+principal\s+balance[:\s]+\$?([\d,]+\.?\d*)/i,
+                /current\s+principal[:\s]+\$?([\d,]+\.?\d*)/i,
+                /loan\s+balance[:\s]+\$?([\d,]+\.?\d*)/i,
+                /remaining\s+balance[:\s]+\$?([\d,]+\.?\d*)/i
             ];
             for (const pattern of principalPatterns) {
-                const match = text.match(pattern);
+                const match = originalText.match(pattern);
                 if (match) {
-                    parsed.principal = Math.round(parseFloat(match[1]));
-                    break;
+                    const value = parseFloat(match[1].replace(/,/g, ''));
+                    // Sanity check: principal should be > $10,000
+                    if (value > 10000) {
+                        parsed.principal = Math.round(value);
+                        break;
+                    }
                 }
             }
             
@@ -284,41 +290,60 @@
             const ratePatterns = [
                 /interest\s+rate[:\s]+([\d.]+)%?/i,
                 /rate[:\s]+([\d.]+)%/i,
-                /([\d.]+)%\s+interest/i
+                /annual\s+(?:percentage\s+)?rate[:\s]+([\d.]+)%?/i,
+                /([\d.]+)%\s+(?:interest|APR)/i
             ];
             for (const pattern of ratePatterns) {
-                const match = text.match(pattern);
+                const match = originalText.match(pattern);
                 if (match) {
-                    parsed.rate = parseFloat(match[1]);
-                    break;
+                    const value = parseFloat(match[1]);
+                    // Sanity check: rate should be between 0.1% and 20%
+                    if (value > 0.1 && value < 20) {
+                        parsed.rate = value;
+                        break;
+                    }
                 }
             }
             
-            // Try to find escrow
+            // Try to find escrow (taxes + insurance)
             const escrowPatterns = [
-                /escrow[:\s]+\$?([\d.]+)/i,
-                /tax\s+\&\s+insurance[:\s]+\$?([\d.]+)/i,
-                /taxes[:\s]+\$?([\d.]+)/i
+                /escrow\s+balance[:\s]+\$?([\d,]+\.?\d*)/i,
+                /escrow\s+\(taxes\s*\&?\s*insurance\)[:\s]+\$?([\d,]+\.?\d*)/i,
+                /escrow[:\s]+\$?([\d,]+\.?\d*)/i,
+                /tax\s*(?:es)?\s*\&\s*insurance[:\s]+\$?([\d,]+\.?\d*)/i,
+                /impound[:\s]+\$?([\d,]+\.?\d*)/i
             ];
             for (const pattern of escrowPatterns) {
-                const match = text.match(pattern);
+                const match = originalText.match(pattern);
                 if (match) {
-                    parsed.escrow = Math.round(parseFloat(match[1]));
-                    break;
+                    const value = parseFloat(match[1].replace(/,/g, ''));
+                    // Sanity check: escrow typically < $5,000/month
+                    if (value > 0 && value < 5000) {
+                        parsed.escrow = Math.round(value);
+                        break;
+                    }
                 }
             }
             
-            // Try to detect extra principal payment
-            const extraPatterns = [
-                /additional\s+principal[:\s]+\$?([\d.]+)/i,
-                /extra\s+payment[:\s]+\$?([\d.]+)/i,
-                /principal\s+payment[:\s]+\$?([\d.]+)/i
-            ];
-            for (const pattern of extraPatterns) {
-                const match = text.match(pattern);
-                if (match) {
-                    parsed.extra = Math.round(parseFloat(match[1]));
-                    break;
+            // Try to detect extra principal payment from transaction history
+            // Look for lines with "Principal" in payment breakdown
+            const lines = originalText.split('\n');
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                // Look for payment breakdown showing principal > interest
+                // This indicates extra payment was made
+                if (/principal/i.test(line)) {
+                    const numbers = line.match(/\$?([\d,]+\.?\d*)/g);
+                    if (numbers && numbers.length >= 2) {
+                        const principal = parseFloat(numbers[0].replace(/[$,]/g, ''));
+                        const interest = parseFloat(numbers[1].replace(/[$,]/g, ''));
+                        // If principal payment is significantly larger than interest, 
+                        // there might be an extra payment
+                        if (principal > interest * 2 && principal > 500) {
+                            // Estimate extra payment (rough heuristic)
+                            parsed.extra = Math.round(principal - interest);
+                        }
+                    }
                 }
             }
             
