@@ -304,16 +304,27 @@
                 
                 // OCR for images
                 document.getElementById('ocr-progress').textContent = 'Reading statement...';
-                const result = await Tesseract.recognize(file, 'eng', {
-                    logger: m => {
-                        if (m.status === 'recognizing text') {
-                            document.getElementById('ocr-progress').textContent = 
-                                `Processing: ${Math.round(m.progress * 100)}%`;
-                        }
-                    }
-                });
                 
-                text = result.data.text;
+                try {
+                    const result = await Tesseract.recognize(file, 'eng', {
+                        logger: m => {
+                            if (m.status === 'recognizing text') {
+                                document.getElementById('ocr-progress').textContent = 
+                                    `Processing: ${Math.round(m.progress * 100)}%`;
+                            }
+                        }
+                    });
+                    
+                    text = result.data.text;
+                    console.log('OCR Text:', text); // Debug output
+                    
+                    if (!text || text.trim().length < 50) {
+                        throw new Error('OCR returned insufficient text');
+                    }
+                } catch (ocrError) {
+                    console.error('OCR Error:', ocrError);
+                    throw new Error('Failed to extract text from image. Please ensure image is clear and well-lit.');
+                }
                 
                 // Parse the text
                 const parsed = parseStatement(text);
@@ -354,16 +365,36 @@
                 document.getElementById('upload-status').classList.add('hidden');
                 document.getElementById('extracted-preview').classList.remove('hidden');
                 
-                let extractedInfo = `<div class="grid grid-cols-2 gap-2">`;
-                if (parsed.principal) extractedInfo += `<div><strong>Principal Balance:</strong> $${parsed.principal.toLocaleString()}</div>`;
-                if (parsed.rate) extractedInfo += `<div><strong>Interest Rate:</strong> ${parsed.rate}%</div>`;
-                if (calculatedTerm) extractedInfo += `<div><strong>Remaining Term:</strong> ${(calculatedTerm / 12).toFixed(1)} years</div>`;
-                if (parsed.escrow) extractedInfo += `<div><strong>Escrow:</strong> $${parsed.escrow.toLocaleString()}</div>`;
-                if (parsed.currentPrincipalPayment) extractedInfo += `<div><strong>This Month Principal:</strong> $${parsed.currentPrincipalPayment.toLocaleString()}</div>`;
-                if (parsed.currentInterestPayment) extractedInfo += `<div><strong>This Month Interest:</strong> $${parsed.currentInterestPayment.toLocaleString()}</div>`;
-                if (detectedExtraPayment > 0) extractedInfo += `<div class="col-span-2 text-green-600 font-semibold"><strong>✓ Extra Payment Detected:</strong> $${detectedExtraPayment.toLocaleString()}/month</div>`;
-                extractedInfo += `</div>`;
-                extractedInfo += `<p class="mt-2 text-xs">Review and adjust the values below if needed.</p>`;
+                let extractedInfo = '';
+                
+                // Check if any data was extracted
+                const hasData = parsed.principal || parsed.rate || parsed.escrow || 
+                               parsed.currentPrincipalPayment || parsed.currentInterestPayment;
+                
+                if (!hasData) {
+                    // No data extracted - show warning and raw text for debugging
+                    extractedInfo = `
+                        <div class="bg-yellow-50 border border-yellow-200 rounded p-3 mb-3">
+                            <p class="font-semibold text-yellow-800">⚠️ Could not extract mortgage details</p>
+                            <p class="text-sm text-yellow-700 mt-1">Please enter values manually below or try retaking the photo with better lighting.</p>
+                        </div>
+                        <details class="text-xs">
+                            <summary class="cursor-pointer text-blue-600 hover:text-blue-700">Show extracted text (debug)</summary>
+                            <pre class="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto max-h-40">${text.substring(0, 500)}</pre>
+                        </details>
+                    `;
+                } else {
+                    extractedInfo = `<div class="grid grid-cols-2 gap-2">`;
+                    if (parsed.principal) extractedInfo += `<div><strong>Principal Balance:</strong> $${parsed.principal.toLocaleString()}</div>`;
+                    if (parsed.rate) extractedInfo += `<div><strong>Interest Rate:</strong> ${parsed.rate}%</div>`;
+                    if (calculatedTerm) extractedInfo += `<div><strong>Remaining Term:</strong> ${(calculatedTerm / 12).toFixed(1)} years</div>`;
+                    if (parsed.escrow) extractedInfo += `<div><strong>Escrow:</strong> $${parsed.escrow.toLocaleString()}</div>`;
+                    if (parsed.currentPrincipalPayment) extractedInfo += `<div><strong>This Month Principal:</strong> $${parsed.currentPrincipalPayment.toLocaleString()}</div>`;
+                    if (parsed.currentInterestPayment) extractedInfo += `<div><strong>This Month Interest:</strong> $${parsed.currentInterestPayment.toLocaleString()}</div>`;
+                    if (detectedExtraPayment > 0) extractedInfo += `<div class="col-span-2 text-green-600 font-semibold"><strong>✓ Extra Payment Detected:</strong> $${detectedExtraPayment.toLocaleString()}/month</div>`;
+                    extractedInfo += `</div>`;
+                    extractedInfo += `<p class="mt-2 text-xs">Review and adjust the values below if needed.</p>`;
+                }
                 
                 document.getElementById('extracted-text').innerHTML = extractedInfo;
                 
@@ -380,14 +411,23 @@
             // Keep original text for comma-aware parsing
             const originalText = text;
             
+            // Clean up common OCR errors
+            text = text
+                .replace(/[|]/g, 'I')  // Vertical bar to I
+                .replace(/[¢]/g, 'c')  // Cent sign
+                .replace(/\s+/g, ' ')  // Multiple spaces to single
+                .trim();
+            
             // Try to find principal balance (with commas)
+            // Add more flexible patterns and handle OCR errors (0/O confusion, etc)
             const principalPatterns = [
-                /outstanding\s+principal\s+balance[:\s]+\$?([\d,]+\.?\d*)/i,
-                /principal\s+balance[:\s]+\$?([\d,]+\.?\d*)/i,
-                /unpaid\s+principal\s+balance[:\s]+\$?([\d,]+\.?\d*)/i,
-                /current\s+principal[:\s]+\$?([\d,]+\.?\d*)/i,
-                /loan\s+balance[:\s]+\$?([\d,]+\.?\d*)/i,
-                /remaining\s+balance[:\s]+\$?([\d,]+\.?\d*)/i
+                /outstanding\s+principal\s+balance[:\s]+\$?\s*([\d,]+\.?\d*)/i,
+                /principal\s+balance[:\s]+\$?\s*([\d,]+\.?\d*)/i,
+                /unpaid\s+principal\s+balance[:\s]+\$?\s*([\d,]+\.?\d*)/i,
+                /current\s+principal[:\s]+\$?\s*([\d,]+\.?\d*)/i,
+                /loan\s+balance[:\s]+\$?\s*([\d,]+\.?\d*)/i,
+                /remaining\s+balance[:\s]+\$?\s*([\d,]+\.?\d*)/i,
+                /balance.*?\$?\s*([\d,]+\.?\d{2})/i  // Generic fallback with 2 decimals
             ];
             for (const pattern of principalPatterns) {
                 const match = originalText.match(pattern);
