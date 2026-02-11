@@ -211,6 +211,10 @@
     </div>
 
     <script>
+        console.log('🏠 Mortgage Calculator loaded');
+        console.log('Tesseract available:', typeof Tesseract !== 'undefined');
+        console.log('Chart.js available:', typeof Chart !== 'undefined');
+        
         let scheduleData = [];
         let chart = null;
         
@@ -286,8 +290,14 @@
         }
 
         async function handleFileUpload(event) {
+            console.log('=== FILE UPLOAD STARTED ===');
             const file = event.target.files[0];
-            if (!file) return;
+            if (!file) {
+                console.log('No file selected');
+                return;
+            }
+            
+            console.log('File:', file.name, file.type, file.size, 'bytes');
             
             document.getElementById('upload-status').classList.remove('hidden');
             document.getElementById('extracted-preview').classList.add('hidden');
@@ -296,11 +306,14 @@
                 let text = '';
                 
                 if (file.type === 'application/pdf') {
+                    console.log('PDF detected - not supported yet');
                     // For PDF, we'd need pdf.js - for now, prompt user to use image
                     alert('PDF support coming soon! Please take a photo of your statement instead.');
                     document.getElementById('upload-status').classList.add('hidden');
                     return;
                 }
+                
+                console.log('Starting OCR...');
                 
                 // OCR for images
                 document.getElementById('ocr-progress').textContent = 'Reading statement...';
@@ -399,10 +412,15 @@
                 document.getElementById('extracted-text').innerHTML = extractedInfo;
                 
             } catch (error) {
-                console.error('OCR Error:', error);
-                alert('Failed to read statement. Please enter details manually.');
+                console.error('=== ERROR IN handleFileUpload ===');
+                console.error('Error type:', error.name);
+                console.error('Error message:', error.message);
+                console.error('Full error:', error);
+                alert('Failed to read statement. Please enter details manually. Check console for details.');
                 document.getElementById('upload-status').classList.add('hidden');
             }
+            
+            console.log('=== FILE UPLOAD COMPLETE ===');
         }
 
         function parseStatement(text) {
