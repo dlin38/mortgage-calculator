@@ -201,6 +201,36 @@
     <script>
         let scheduleData = [];
         let chart = null;
+        
+        function calculateRemainingTerm(balance, monthlyRate, monthlyPayment) {
+            // Calculate remaining months using amortization formula
+            // n = -ln(1 - (B * r / P)) / ln(1 + r)
+            // Where: B = balance, r = monthly rate, P = payment
+            
+            if (balance <= 0 || monthlyRate <= 0 || monthlyPayment <= 0) return null;
+            
+            // Check if payment is sufficient to pay off loan
+            const minPayment = balance * monthlyRate;
+            if (monthlyPayment <= minPayment) {
+                // Payment doesn't even cover interest - infinite loan
+                return null;
+            }
+            
+            try {
+                const numerator = Math.log(1 - (balance * monthlyRate / monthlyPayment));
+                const denominator = Math.log(1 + monthlyRate);
+                const months = -numerator / denominator;
+                
+                // Sanity check: between 1 month and 40 years
+                if (months > 0 && months <= 480) {
+                    return Math.round(months);
+                }
+            } catch (e) {
+                console.error('Error calculating term:', e);
+            }
+            
+            return null;
+        }
 
         async function handleFileUpload(event) {
             const file = event.target.files[0];
@@ -235,22 +265,35 @@
                 // Parse the text
                 const parsed = parseStatement(text);
                 
+                // Calculate remaining term if we have payment breakdown
+                let calculatedTerm = null;
+                if (parsed.principal && parsed.rate && parsed.currentPrincipalPayment && parsed.currentInterestPayment) {
+                    calculatedTerm = calculateRemainingTerm(
+                        parsed.principal,
+                        parsed.rate / 100 / 12,
+                        parsed.currentPrincipalPayment + parsed.currentInterestPayment
+                    );
+                }
+                
                 if (parsed.principal) document.getElementById('principal').value = parsed.principal;
                 if (parsed.rate) document.getElementById('rate').value = parsed.rate;
+                if (calculatedTerm) document.getElementById('years').value = (calculatedTerm / 12).toFixed(1);
                 if (parsed.escrow) document.getElementById('escrow').value = parsed.escrow;
-                if (parsed.extra) document.getElementById('extra').value = parsed.extra;
                 
                 document.getElementById('upload-status').classList.add('hidden');
                 document.getElementById('extracted-preview').classList.remove('hidden');
-                document.getElementById('extracted-text').innerHTML = `
-                    <div class="grid grid-cols-2 gap-2">
-                        ${parsed.principal ? `<div><strong>Principal:</strong> $${parsed.principal.toLocaleString()}</div>` : ''}
-                        ${parsed.rate ? `<div><strong>Rate:</strong> ${parsed.rate}%</div>` : ''}
-                        ${parsed.escrow ? `<div><strong>Escrow:</strong> $${parsed.escrow.toLocaleString()}</div>` : ''}
-                        ${parsed.extra ? `<div><strong>Extra Payment:</strong> $${parsed.extra.toLocaleString()}</div>` : ''}
-                    </div>
-                    <p class="mt-2 text-xs">Review and adjust the values below if needed.</p>
-                `;
+                
+                let extractedInfo = `<div class="grid grid-cols-2 gap-2">`;
+                if (parsed.principal) extractedInfo += `<div><strong>Principal Balance:</strong> $${parsed.principal.toLocaleString()}</div>`;
+                if (parsed.rate) extractedInfo += `<div><strong>Interest Rate:</strong> ${parsed.rate}%</div>`;
+                if (calculatedTerm) extractedInfo += `<div><strong>Remaining Term:</strong> ${(calculatedTerm / 12).toFixed(1)} years</div>`;
+                if (parsed.escrow) extractedInfo += `<div><strong>Escrow:</strong> $${parsed.escrow.toLocaleString()}</div>`;
+                if (parsed.currentPrincipalPayment) extractedInfo += `<div><strong>This Month Principal:</strong> $${parsed.currentPrincipalPayment.toLocaleString()}</div>`;
+                if (parsed.currentInterestPayment) extractedInfo += `<div><strong>This Month Interest:</strong> $${parsed.currentInterestPayment.toLocaleString()}</div>`;
+                extractedInfo += `</div>`;
+                extractedInfo += `<p class="mt-2 text-xs">Review and adjust the values below if needed.</p>`;
+                
+                document.getElementById('extracted-text').innerHTML = extractedInfo;
                 
             } catch (error) {
                 console.error('OCR Error:', error);
@@ -325,24 +368,27 @@
                 }
             }
             
-            // Try to detect extra principal payment from transaction history
-            // Look for lines with "Principal" in payment breakdown
+            // Try to detect current payment breakdown from recent transaction
+            // This helps calculate remaining term
             const lines = originalText.split('\n');
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
-                // Look for payment breakdown showing principal > interest
-                // This indicates extra payment was made
-                if (/principal/i.test(line)) {
-                    const numbers = line.match(/\$?([\d,]+\.?\d*)/g);
-                    if (numbers && numbers.length >= 2) {
-                        const principal = parseFloat(numbers[0].replace(/[$,]/g, ''));
-                        const interest = parseFloat(numbers[1].replace(/[$,]/g, ''));
-                        // If principal payment is significantly larger than interest, 
-                        // there might be an extra payment
-                        if (principal > interest * 2 && principal > 500) {
-                            // Estimate extra payment (rough heuristic)
-                            parsed.extra = Math.round(principal - interest);
-                        }
+                
+                // Look for payment transaction with Principal and Interest breakdown
+                // Common patterns: "Principal $X Interest $Y" or table rows
+                const principalMatch = line.match(/principal[:\s]+\$?([\d,]+\.?\d*)/i);
+                const interestMatch = line.match(/interest[:\s]+\$?([\d,]+\.?\d*)/i);
+                
+                if (principalMatch && interestMatch) {
+                    const principalPayment = parseFloat(principalMatch[1].replace(/,/g, ''));
+                    const interestPayment = parseFloat(interestMatch[1].replace(/,/g, ''));
+                    
+                    // Sanity check
+                    if (principalPayment > 0 && interestPayment > 0 && 
+                        principalPayment < 10000 && interestPayment < 10000) {
+                        parsed.currentPrincipalPayment = principalPayment;
+                        parsed.currentInterestPayment = interestPayment;
+                        break;
                     }
                 }
             }
