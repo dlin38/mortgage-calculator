@@ -436,7 +436,22 @@
                     // Sanity check: principal should be > $10,000
                     if (value > 10000) {
                         parsed.principal = Math.round(value);
+                        console.log(`Found principal: $${value} using pattern: ${pattern}`);
                         break;
+                    }
+                }
+            }
+            
+            // Fallback: Look for largest dollar amount (likely the principal)
+            if (!parsed.principal) {
+                const allDollarAmounts = originalText.match(/\$\s*([\d,]+\.?\d{0,2})/g);
+                if (allDollarAmounts) {
+                    const amounts = allDollarAmounts
+                        .map(a => parseFloat(a.replace(/[$,\s]/g, '')))
+                        .filter(a => a > 10000 && a < 1000000);
+                    if (amounts.length > 0) {
+                        parsed.principal = Math.round(Math.max(...amounts));
+                        console.log(`Found principal (fallback): $${parsed.principal}`);
                     }
                 }
             }
@@ -455,7 +470,23 @@
                     // Sanity check: rate should be between 0.1% and 20%
                     if (value > 0.1 && value < 20) {
                         parsed.rate = value;
+                        console.log(`Found rate: ${value}% using pattern: ${pattern}`);
                         break;
+                    }
+                }
+            }
+            
+            // Fallback: Look for any number followed by % in reasonable range
+            if (!parsed.rate) {
+                const percentages = originalText.match(/([\d.]+)\s*%/g);
+                if (percentages) {
+                    for (const p of percentages) {
+                        const value = parseFloat(p.replace('%', '').trim());
+                        if (value > 0.1 && value < 20) {
+                            parsed.rate = value;
+                            console.log(`Found rate (fallback): ${value}%`);
+                            break;
+                        }
                     }
                 }
             }
@@ -490,21 +521,24 @@
                 const line = lines[i];
                 
                 if (/mortgage\s+payment/i.test(line) || /payment\s+posted/i.test(line)) {
-                    // Extract all numbers from this line
-                    const numbers = line.match(/\$?([\d,]+\.?\d+)/g);
-                    if (numbers && numbers.length >= 3) {
+                    // Extract all numbers from this line and next few lines
+                    const combinedText = lines.slice(i, Math.min(i + 3, lines.length)).join(' ');
+                    const numbers = combinedText.match(/\$?\s*([\d,]+\.[\d]{2})/g);
+                    
+                    if (numbers && numbers.length >= 2) {
                         // Try to find principal and interest
-                        // Typically: [total payment] [principal] [interest] [escrow]
-                        for (let j = 1; j < numbers.length - 1; j++) {
-                            const principal = parseFloat(numbers[j].replace(/[$,]/g, ''));
-                            const interest = parseFloat(numbers[j + 1].replace(/[$,]/g, ''));
+                        // Look for two consecutive numbers in $500-$5000 range
+                        for (let j = 0; j < numbers.length - 1; j++) {
+                            const principal = parseFloat(numbers[j].replace(/[$,\s]/g, ''));
+                            const interest = parseFloat(numbers[j + 1].replace(/[$,\s]/g, ''));
                             
-                            // Sanity check: both should be > 0 and < $10k, and principal usually > interest
-                            if (principal > 0 && interest > 0 && 
+                            // Sanity check: both should be in typical payment range
+                            if (principal > 100 && interest > 50 && 
                                 principal < 10000 && interest < 10000 &&
-                                principal > interest * 0.5) {  // Allow for early in loan where interest might be higher
+                                principal > interest * 0.3) {
                                 parsed.currentPrincipalPayment = principal;
                                 parsed.currentInterestPayment = interest;
+                                console.log(`Found payments - Principal: $${principal}, Interest: $${interest}`);
                                 break;
                             }
                         }
@@ -534,6 +568,15 @@
                     }
                 }
             }
+            
+            // Log final parsed results
+            console.log('Parsing complete:', {
+                principal: parsed.principal || 'NOT FOUND',
+                rate: parsed.rate || 'NOT FOUND',
+                escrow: parsed.escrow || 'NOT FOUND',
+                currentPrincipalPayment: parsed.currentPrincipalPayment || 'NOT FOUND',
+                currentInterestPayment: parsed.currentInterestPayment || 'NOT FOUND'
+            });
             
             return parsed;
         }
