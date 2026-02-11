@@ -119,8 +119,20 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">Extra Monthly Payment</label>
                         <div class="relative">
                             <span class="absolute left-3 top-3 text-gray-500">$</span>
-                            <input type="number" id="extra" class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="0" value="0">
+                            <input type="number" id="extra" class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="0" value="0" onchange="clearRoundUp()">
                         </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Round Up Payment To
+                            <span class="text-xs text-gray-500">(alternative)</span>
+                        </label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-3 text-gray-500">$</span>
+                            <input type="number" id="roundup" class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="e.g. 4000" value="" onchange="calculateExtraFromRoundUp()">
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Calculator will determine extra payment needed</p>
                     </div>
                     
                     <div>
@@ -201,6 +213,47 @@
     <script>
         let scheduleData = [];
         let chart = null;
+        
+        function calculateExtraFromRoundUp() {
+            const roundUpAmount = parseFloat(document.getElementById('roundup').value);
+            if (!roundUpAmount) return;
+            
+            const principal = parseFloat(document.getElementById('principal').value);
+            const rate = parseFloat(document.getElementById('rate').value) / 100 / 12;
+            const years = parseFloat(document.getElementById('years').value);
+            const escrow = parseFloat(document.getElementById('escrow').value) || 0;
+            
+            if (!principal || !rate || !years) {
+                alert('Please fill in principal, rate, and term first.');
+                return;
+            }
+            
+            // Calculate standard payment
+            const months = years * 12;
+            const standardPayment = principal * (rate * Math.pow(1 + rate, months)) / (Math.pow(1 + rate, months) - 1);
+            const totalStandardPayment = standardPayment + escrow;
+            
+            // Calculate extra
+            const extra = roundUpAmount - totalStandardPayment;
+            
+            if (extra < 0) {
+                alert(`Round-up amount ($${roundUpAmount.toLocaleString()}) is less than standard payment ($${totalStandardPayment.toLocaleString()})`);
+                document.getElementById('roundup').value = '';
+                return;
+            }
+            
+            document.getElementById('extra').value = Math.round(extra);
+            
+            // Show feedback
+            document.getElementById('roundup').classList.add('bg-green-50', 'border-green-300');
+            setTimeout(() => {
+                document.getElementById('roundup').classList.remove('bg-green-50', 'border-green-300');
+            }, 1000);
+        }
+        
+        function clearRoundUp() {
+            document.getElementById('roundup').value = '';
+        }
         
         function calculateRemainingTerm(balance, monthlyRate, monthlyPayment) {
             // Calculate remaining months using amortization formula
