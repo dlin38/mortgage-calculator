@@ -434,18 +434,25 @@
                 .replace(/[|]/g, 'I')  // Vertical bar to I
                 .replace(/[¢]/g, 'c')  // Cent sign
                 .replace(/\s+/g, ' ')  // Multiple spaces to single
+                // Fix mangled dollar amounts (common OCR errors)
+                .replace(/[sS]am([0-9])/g, '\$24$1')  // "sam2es7" → "$242..."
+                .replace(/[sS]([0-9]{3})\)/g, '\$$1')  // "S259)" → "$259"
+                .replace(/[sS]([0-9]{5,7})/g, '\$$1')  // "s513430" → "$513430"
+                .replace(/[eE][sS]([0-9])/g, '$1')  // "es7" → "7"
                 .trim();
+            
+            console.log('Cleaned text sample:', text.substring(0, 500));
             
             // Try to find principal balance (with commas)
             // Add more flexible patterns and handle OCR errors (0/O confusion, etc)
             const principalPatterns = [
-                /outstanding\s+principal\s+balance[:\s]+\$?\s*([\d,]+\.?\d*)/i,
+                /outstanding\s+princip[ae]l?\s+[a-z]*\s*\$?\s*([\d,]+\.?\d*)/i,  // "Principe Blancs"
                 /principal\s+balance[:\s]+\$?\s*([\d,]+\.?\d*)/i,
                 /unpaid\s+principal\s+balance[:\s]+\$?\s*([\d,]+\.?\d*)/i,
                 /current\s+principal[:\s]+\$?\s*([\d,]+\.?\d*)/i,
                 /loan\s+balance[:\s]+\$?\s*([\d,]+\.?\d*)/i,
                 /remaining\s+balance[:\s]+\$?\s*([\d,]+\.?\d*)/i,
-                /balance.*?\$?\s*([\d,]+\.?\d{2})/i  // Generic fallback with 2 decimals
+                /balance[:\s]+\$?\s*([\d,]+\.?\d{2})/i  // Generic fallback with 2 decimals
             ];
             for (const pattern of principalPatterns) {
                 const match = originalText.match(pattern);
@@ -511,6 +518,7 @@
             
             // Try to find escrow (taxes + insurance)
             const escrowPatterns = [
+                /escrow\s+[a-z]*ance[:\s]+\$?([\d,]+\.?\d*)/i,  // "Bajance" OCR typo
                 /escrow\s+balance[:\s]+\$?([\d,]+\.?\d*)/i,
                 /escrow\s+\(taxes\s*\&?\s*insurance\)[:\s]+\$?([\d,]+\.?\d*)/i,
                 /escrow[:\s]+\$?([\d,]+\.?\d*)/i,
@@ -566,12 +574,14 @@
             }
             
             // Strategy 2: Look for labeled breakdown (fallback)
+            // Handle OCR typos like "Prncoat" "Irtorost" "Propel" "Pencial"
             if (!parsed.currentPrincipalPayment) {
                 for (let i = 0; i < lines.length; i++) {
                     const line = lines[i];
                     
-                    const principalMatch = line.match(/principal[:\s]+\$?([\d,]+\.?\d*)/i);
-                    const interestMatch = line.match(/interest[:\s]+\$?([\d,]+\.?\d*)/i);
+                    // More flexible patterns for mangled OCR
+                    const principalMatch = line.match(/(?:principal|prncoat|propel|pencial)[:\s]+\$?([\d,]+\.?\d*)/i);
+                    const interestMatch = line.match(/(?:interest|irtorost)[:\s]+\$?([\d,]+\.?\d*)/i);
                     
                     if (principalMatch && interestMatch) {
                         const principalPayment = parseFloat(principalMatch[1].replace(/,/g, ''));
@@ -581,7 +591,28 @@
                             principalPayment < 10000 && interestPayment < 10000) {
                             parsed.currentPrincipalPayment = principalPayment;
                             parsed.currentInterestPayment = interestPayment;
+                            console.log(`Found payments (labeled) - Principal: $${principalPayment}, Interest: $${interestPayment}`);
                             break;
+                        }
+                    }
+                    
+                    // Also check for "EXPLANATION OF AMOUNT DUE" section
+                    if (/explanation\s+of\s+amount/i.test(line)) {
+                        // Look in next few lines
+                        const sectionText = lines.slice(i, Math.min(i + 10, lines.length)).join(' ');
+                        const pMatch = sectionText.match(/(?:principal|pencial)[:\s]+\$?([\d,]+\.[\d]{2})/i);
+                        const iMatch = sectionText.match(/interest[:\s]+\$?([\d,]+\.[\d]{2})/i);
+                        
+                        if (pMatch && iMatch) {
+                            const p = parseFloat(pMatch[1].replace(/,/g, ''));
+                            const i = parseFloat(iMatch[1].replace(/,/g, ''));
+                            
+                            if (p > 0 && i > 0 && p < 10000 && i < 10000) {
+                                parsed.currentPrincipalPayment = p;
+                                parsed.currentInterestPayment = i;
+                                console.log(`Found payments (explanation section) - Principal: $${p}, Interest: $${i}`);
+                                break;
+                            }
                         }
                     }
                 }
