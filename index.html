@@ -108,6 +108,15 @@
                     </div>
                     
                     <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Original Term (Years)
+                            <span class="text-xs text-gray-500">(optional)</span>
+                        </label>
+                        <input type="number" id="original-years" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="30" value="">
+                        <p class="text-xs text-gray-500 mt-1">If known, helps calculate loan progress</p>
+                    </div>
+                    
+                    <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Monthly Escrow (Tax/Insurance)</label>
                         <div class="relative">
                             <span class="absolute left-3 top-3 text-gray-500">$</span>
@@ -478,6 +487,11 @@
                 if (parsed.escrow) document.getElementById('escrow').value = parsed.escrow;
                 if (detectedExtraPayment > 0) document.getElementById('extra').value = detectedExtraPayment;
                 
+                // Auto-fill original term if we calculated loan progress
+                if (loanProgress) {
+                    document.getElementById('original-years').value = loanProgress.originalTerm;
+                }
+                
                 document.getElementById('upload-status').classList.add('hidden');
                 document.getElementById('extracted-preview').classList.remove('hidden');
                 
@@ -811,6 +825,7 @@
             const principal = parseFloat(document.getElementById('principal').value);
             const rate = parseFloat(document.getElementById('rate').value) / 100 / 12;
             const years = parseFloat(document.getElementById('years').value);
+            const originalYears = parseFloat(document.getElementById('original-years').value) || null;
             const escrow = parseFloat(document.getElementById('escrow').value) || 0;
             const extra = parseFloat(document.getElementById('extra').value) || 0;
             const lumpsum = parseFloat(document.getElementById('lumpsum').value) || 0;
@@ -888,6 +903,28 @@
             document.getElementById('time-saved').textContent = `${yearsSaved} years earlier`;
             document.getElementById('interest-saved').textContent = '$' + interestSaved.toLocaleString(undefined, {maximumFractionDigits: 0});
             document.getElementById('total-paid').textContent = '$' + totalPaid.toLocaleString(undefined, {maximumFractionDigits: 0});
+            
+            // Calculate loan progress if original term was provided
+            if (originalYears) {
+                const originalTermMonths = originalYears * 12;
+                const remainingMonths = years * 12;
+                
+                // Calculate what the original loan amount would be
+                const factor = Math.pow(1 + rate, originalTermMonths);
+                const originalAmount = standardPayment * (factor - 1) / (rate * factor);
+                
+                const paymentsMade = originalTermMonths - remainingMonths;
+                const principalPaid = originalAmount - principal;
+                
+                // Show loan progress
+                document.getElementById('loan-progress').classList.remove('hidden');
+                document.getElementById('original-amount').textContent = '$' + Math.round(originalAmount).toLocaleString();
+                document.getElementById('original-term').textContent = originalYears + ' years';
+                document.getElementById('payments-made').textContent = paymentsMade + ' months';
+                document.getElementById('principal-paid').textContent = '$' + Math.round(principalPaid).toLocaleString();
+            } else {
+                document.getElementById('loan-progress').classList.add('hidden');
+            }
             
             // Render table
             renderScheduleTable();
