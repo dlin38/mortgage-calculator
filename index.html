@@ -175,16 +175,26 @@
                 <!-- Chart -->
                 <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                     <h3 class="text-xl font-bold mb-4">📈 Balance Over Time</h3>
-                    <canvas id="balanceChart" height="100"></canvas>
+                    <div style="max-height: 400px;">
+                        <canvas id="balanceChart"></canvas>
+                    </div>
                 </div>
 
                 <!-- Detailed Schedule -->
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-xl font-bold">📅 Prepayment Schedule</h3>
-                        <button onclick="exportToCSV()" class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg text-sm font-medium">
-                            📥 Export CSV
-                        </button>
+                        <div class="flex gap-2">
+                            <select id="schedule-view" onchange="renderScheduleTable()" class="bg-gray-100 border border-gray-300 rounded px-3 py-2 text-sm">
+                                <option value="12">First Year</option>
+                                <option value="24">First 2 Years</option>
+                                <option value="60">First 5 Years</option>
+                                <option value="all">All Months</option>
+                            </select>
+                            <button onclick="exportToCSV()" class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg text-sm font-medium">
+                                📥 Export CSV
+                            </button>
+                        </div>
                     </div>
                     
                     <div class="overflow-x-auto">
@@ -205,6 +215,7 @@
                             </tbody>
                         </table>
                     </div>
+                    <div id="schedule-info" class="text-sm text-gray-600 mt-3 text-center"></div>
                 </div>
             </div>
         </div>
@@ -790,9 +801,14 @@
 
         function renderScheduleTable() {
             const tbody = document.getElementById('schedule-table');
+            const infoDiv = document.getElementById('schedule-info');
             tbody.innerHTML = '';
             
-            scheduleData.forEach(row => {
+            const view = document.getElementById('schedule-view').value;
+            const maxRows = view === 'all' ? scheduleData.length : parseInt(view);
+            const dataToShow = scheduleData.slice(0, maxRows);
+            
+            dataToShow.forEach(row => {
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-gray-50';
                 tr.innerHTML = `
@@ -806,6 +822,13 @@
                 `;
                 tbody.appendChild(tr);
             });
+            
+            // Show info about what's displayed
+            if (view !== 'all') {
+                infoDiv.textContent = `Showing first ${maxRows} months of ${scheduleData.length} total. Use dropdown or export CSV for complete schedule.`;
+            } else {
+                infoDiv.textContent = `Showing all ${scheduleData.length} months.`;
+            }
         }
 
         function renderChart() {
@@ -831,7 +854,8 @@
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false,
+                    maintainAspectRatio: true,
+                    aspectRatio: 2.5,
                     plugins: {
                         legend: { display: false },
                         tooltip: {
