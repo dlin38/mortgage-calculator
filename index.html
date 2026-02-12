@@ -932,25 +932,45 @@
             }
             
             // Calculate standard payment (without extra)
-            // If user provided current payment breakdown, use that instead of recalculating
+            // CRITICAL: Mortgage payment is FIXED from day 1, based on ORIGINAL loan amount and term
             let standardPayment;
+            const months = years * 12;
+            
             if (currentPrincipalPayment && currentInterestPayment) {
-                // Use the actual payment from statement (minus detected extra)
+                // Best case: User provided actual payment breakdown from statement
+                // This IS the original payment (the principal + interest split changes monthly, but total is fixed)
+                // Just subtract any extra payment we detected
                 const actualTotal = currentPrincipalPayment + currentInterestPayment;
+                const expectedInterest = principal * rate;
+                const expectedPrincipal = actualTotal - expectedInterest;
+                
+                // Extra is the difference between actual principal and expected principal
+                extra = Math.max(0, Math.round(currentPrincipalPayment - expectedPrincipal));
+                
                 standardPayment = actualTotal - extra;
-                console.log('Using actual payment from statement:', {
+                
+                console.log('Using actual payment from statement (THIS IS YOUR ORIGINAL PAYMENT):', {
+                    currentPrincipal: currentPrincipalPayment.toFixed(2),
+                    currentInterest: currentInterestPayment.toFixed(2),
                     actualTotal: actualTotal.toFixed(2),
+                    expectedPrincipal: expectedPrincipal.toFixed(2),
                     detectedExtra: extra.toFixed(2),
                     standardPayment: standardPayment.toFixed(2)
                 });
+                
+                // Update the extra payment field
+                document.getElementById('extra').value = extra;
             } else {
-                // Calculate based on remaining balance and term
-                const months = years * 12;
+                // Fallback: User didn't provide payment breakdown
+                // We have to calculate, which requires knowing original amount + original term
+                // Since we don't have that, this is an APPROXIMATION
                 standardPayment = principal * (rate * Math.pow(1 + rate, months)) / (Math.pow(1 + rate, months) - 1);
-                console.log('Calculated standard payment from balance/term:', standardPayment.toFixed(2));
+                
+                console.warn('⚠️ APPROXIMATION: Calculating payment from current balance and remaining term');
+                console.warn('This may not match your actual payment!');
+                console.warn('For accurate results, enter "This Months Principal Payment" and "This Months Interest Payment" from your statement');
+                console.log('Calculated payment:', standardPayment.toFixed(2));
             }
-            
-            const months = years * 12;
             
             // Calculate standard schedule (for comparison)
             let standardBalance = principal;
