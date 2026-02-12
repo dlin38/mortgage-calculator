@@ -939,13 +939,19 @@
             if (currentPrincipalPayment && currentInterestPayment) {
                 // Best case: User provided actual payment breakdown from statement
                 // This IS the original payment (the principal + interest split changes monthly, but total is fixed)
-                // Just subtract any extra payment we detected
                 const actualTotal = currentPrincipalPayment + currentInterestPayment;
                 const expectedInterest = principal * rate;
                 const expectedPrincipal = actualTotal - expectedInterest;
                 
-                // Extra is the difference between actual principal and expected principal
-                extra = Math.max(0, Math.round(currentPrincipalPayment - expectedPrincipal));
+                // Only auto-detect extra if user hasn't already specified it (e.g., via round-up)
+                if (!extra || extra === 0) {
+                    // Extra is the difference between actual principal and expected principal
+                    extra = Math.max(0, Math.round(currentPrincipalPayment - expectedPrincipal));
+                    document.getElementById('extra').value = extra;
+                    console.log('Auto-detected extra payment:', extra.toFixed(2));
+                } else {
+                    console.log('Using user-specified extra payment:', extra.toFixed(2));
+                }
                 
                 standardPayment = actualTotal - extra;
                 
@@ -954,12 +960,9 @@
                     currentInterest: currentInterestPayment.toFixed(2),
                     actualTotal: actualTotal.toFixed(2),
                     expectedPrincipal: expectedPrincipal.toFixed(2),
-                    detectedExtra: extra.toFixed(2),
+                    extra: extra.toFixed(2),
                     standardPayment: standardPayment.toFixed(2)
                 });
-                
-                // Update the extra payment field
-                document.getElementById('extra').value = extra;
             } else {
                 // Fallback: User didn't provide payment breakdown
                 // We have to calculate, which requires knowing original amount + original term
