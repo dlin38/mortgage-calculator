@@ -85,45 +85,80 @@
             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                 <h2 class="text-2xl font-bold mb-4">📊 Mortgage Details</h2>
                 
-                <div class="grid md:grid-cols-2 gap-4">
+                <div class="space-y-6">
+                    <!-- Basic Info Section -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Current Principal Balance</label>
-                        <div class="relative">
-                            <span class="absolute left-3 top-3 text-gray-500">$</span>
-                            <input type="number" id="principal" class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="250000" value="250000">
+                        <h4 class="font-semibold text-gray-700 mb-3">📋 Basic Information</h4>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Current Principal Balance *</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-3 text-gray-500">$</span>
+                                    <input type="number" id="principal" class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="244553" value="">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Interest Rate *</label>
+                                <div class="relative">
+                                    <input type="number" step="0.01" id="rate" class="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="3.875" value="">
+                                    <span class="absolute right-3 top-3 text-gray-500">%</span>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Remaining Term (Years)
+                                    <span class="text-xs text-gray-500">(or fill payment breakdown)</span>
+                                </label>
+                                <input type="number" id="years" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="15" value="">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Original Term (Years)
+                                    <span class="text-xs text-gray-500">(optional)</span>
+                                </label>
+                                <input type="number" id="original-years" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="30" value="">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Monthly Escrow</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-3 text-gray-500">$</span>
+                                    <input type="number" id="escrow" class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="5685" value="">
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
+                    <!-- Current Payment Breakdown Section -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Interest Rate</label>
-                        <div class="relative">
-                            <input type="number" step="0.01" id="rate" class="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="6.5" value="6.5">
-                            <span class="absolute right-3 top-3 text-gray-500">%</span>
+                        <h4 class="font-semibold text-gray-700 mb-3">💰 This Month's Payment Breakdown (Optional)</h4>
+                        <p class="text-sm text-gray-600 mb-3">Enter from your statement to auto-detect extra payments and calculate remaining term</p>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Principal Payment</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-3 text-gray-500">$</span>
+                                    <input type="number" step="0.01" id="current-principal" class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="1572.85" value="">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Interest Payment</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-3 text-gray-500">$</span>
+                                    <input type="number" step="0.01" id="current-interest" class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="794.78" value="">
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
+                    <!-- Extra Payments Section -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Remaining Term (Years)</label>
-                        <input type="number" id="years" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="30" value="30">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Original Term (Years)
-                            <span class="text-xs text-gray-500">(optional)</span>
-                        </label>
-                        <input type="number" id="original-years" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="30" value="">
-                        <p class="text-xs text-gray-500 mt-1">If known, helps calculate loan progress</p>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Monthly Escrow (Tax/Insurance)</label>
-                        <div class="relative">
-                            <span class="absolute left-3 top-3 text-gray-500">$</span>
-                            <input type="number" id="escrow" class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="500" value="500">
-                        </div>
-                    </div>
-                    
+                        <h4 class="font-semibold text-gray-700 mb-3">🚀 Extra Payments</h4>
+                        <div class="grid md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Extra Monthly Payment</label>
                         <div class="relative">
@@ -144,11 +179,13 @@
                         <p class="text-xs text-gray-500 mt-1">Calculator will determine extra payment needed</p>
                     </div>
                     
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">One-Time Extra Payment</label>
-                        <div class="relative">
-                            <span class="absolute left-3 top-3 text-gray-500">$</span>
-                            <input type="number" id="lumpsum" class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="0" value="0">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">One-Time Extra Payment</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-3 text-gray-500">$</span>
+                                    <input type="number" id="lumpsum" class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="0" value="">
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -487,6 +524,10 @@
                 if (parsed.escrow) document.getElementById('escrow').value = parsed.escrow;
                 if (detectedExtraPayment > 0) document.getElementById('extra').value = detectedExtraPayment;
                 
+                // Fill in current payment breakdown fields
+                if (parsed.currentPrincipalPayment) document.getElementById('current-principal').value = parsed.currentPrincipalPayment.toFixed(2);
+                if (parsed.currentInterestPayment) document.getElementById('current-interest').value = parsed.currentInterestPayment.toFixed(2);
+                
                 // Auto-fill original term if we calculated loan progress
                 if (loanProgress) {
                     document.getElementById('original-years').value = loanProgress.originalTerm;
@@ -824,14 +865,43 @@
         function calculateMortgage() {
             const principal = parseFloat(document.getElementById('principal').value);
             const rate = parseFloat(document.getElementById('rate').value) / 100 / 12;
-            const years = parseFloat(document.getElementById('years').value);
+            let years = parseFloat(document.getElementById('years').value);
             const originalYears = parseFloat(document.getElementById('original-years').value) || null;
             const escrow = parseFloat(document.getElementById('escrow').value) || 0;
-            const extra = parseFloat(document.getElementById('extra').value) || 0;
+            let extra = parseFloat(document.getElementById('extra').value) || 0;
             const lumpsum = parseFloat(document.getElementById('lumpsum').value) || 0;
+            const currentPrincipalPayment = parseFloat(document.getElementById('current-principal').value) || null;
+            const currentInterestPayment = parseFloat(document.getElementById('current-interest').value) || null;
             
-            if (!principal || !rate || !years) {
-                alert('Please fill in principal, rate, and term.');
+            if (!principal || !rate) {
+                alert('Please fill in at least principal balance and interest rate.');
+                return;
+            }
+            
+            // If user provided current payment breakdown, calculate remaining term and detect extra payment
+            if (currentPrincipalPayment && currentInterestPayment) {
+                const totalPayment = currentPrincipalPayment + currentInterestPayment;
+                
+                // Calculate expected interest based on current balance
+                const expectedInterest = principal * rate;
+                const standardPrincipal = totalPayment - expectedInterest;
+                
+                // Detect extra payment
+                if (currentPrincipalPayment > standardPrincipal + 50) {
+                    extra = Math.round(currentPrincipalPayment - standardPrincipal);
+                    document.getElementById('extra').value = extra;
+                    console.log('Auto-detected extra payment:', extra);
+                }
+                
+                // Calculate remaining term using standard payment
+                const standardPayment = totalPayment - extra;
+                years = calculateRemainingTerm(principal, rate, standardPayment) / 12;
+                document.getElementById('years').value = years.toFixed(1);
+                console.log('Auto-calculated remaining term:', years, 'years');
+            }
+            
+            if (!years) {
+                alert('Please fill in remaining term, or provide current payment breakdown to calculate it.');
                 return;
             }
             
