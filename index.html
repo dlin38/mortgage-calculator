@@ -480,15 +480,30 @@
             }
             
             // Fallback 2: Look for largest dollar amount (likely the principal)
+            // Principal should be significantly larger than escrow/payments
             if (!parsed.principal) {
                 const allDollarAmounts = originalText.match(/\$\s*([\d,]+\.?\d{0,2})/g);
+                console.log('All dollar amounts found:', allDollarAmounts ? allDollarAmounts.slice(0, 20) : 'none');
+                
                 if (allDollarAmounts) {
                     const amounts = allDollarAmounts
                         .map(a => parseFloat(a.replace(/[$,\s]/g, '')))
-                        .filter(a => a > 10000 && a < 1000000);
+                        .filter(a => a > 50000 && a < 1000000);  // Principal should be > $50k
+                    
+                    console.log(`Found ${amounts.length} amounts over $50k:`, amounts);
+                    
                     if (amounts.length > 0) {
                         parsed.principal = Math.round(Math.max(...amounts));
-                        console.log(`Found principal (largest amount fallback): $${parsed.principal}`);
+                        console.log(`Found principal (largest amount > $50k fallback): $${parsed.principal}`);
+                    } else {
+                        // Try lower threshold
+                        const lowerAmounts = allDollarAmounts
+                            .map(a => parseFloat(a.replace(/[$,\s]/g, '')))
+                            .filter(a => a > 100000 && a < 1000000);
+                        if (lowerAmounts.length > 0) {
+                            parsed.principal = Math.round(Math.max(...lowerAmounts));
+                            console.log(`Found principal (largest amount > $100k fallback): $${parsed.principal}`);
+                        }
                     }
                 }
             }
@@ -643,23 +658,26 @@
                 }
             }
             
-            // Fallback: Just find Interest amount and look for nearby principal
+            // Fallback: Just find Interest amount and look for nearby principal payment
             if (!parsed.currentInterestPayment) {
                 const interestMatch = originalText.match(/interest[:\s]+\$\s*([\d,]+\.[\d]{2})/i);
                 if (interestMatch) {
                     parsed.currentInterestPayment = parseFloat(interestMatch[1].replace(/,/g, ''));
                     console.log(`Found interest (simple match): $${parsed.currentInterestPayment}`);
                     
-                    // Now look for a dollar amount before "Interest" in reasonable range
+                    // Now look for a dollar amount before "Interest" in reasonable PAYMENT range
+                    // Payments are typically $500-$5000, not $5k+ (that's escrow balance)
                     const beforeInterest = originalText.substring(Math.max(0, originalText.indexOf('Interest') - 200), originalText.indexOf('Interest'));
                     const amounts = beforeInterest.match(/\$\s*([\d,]+\.[\d]{2})/g);
                     if (amounts && amounts.length > 0) {
-                        // Take the last amount before "Interest"
-                        const lastAmount = amounts[amounts.length - 1];
-                        const value = parseFloat(lastAmount.replace(/[$,\s]/g, ''));
-                        if (value > 100 && value < 10000) {
-                            parsed.currentPrincipalPayment = value;
-                            console.log(`Found principal payment (before interest): $${value}`);
+                        // Look for amounts in typical PAYMENT range ($100-$5000)
+                        for (let i = amounts.length - 1; i >= 0; i--) {
+                            const value = parseFloat(amounts[i].replace(/[$,\s]/g, ''));
+                            if (value > 100 && value < 5000 && value !== parsed.currentInterestPayment) {
+                                parsed.currentPrincipalPayment = value;
+                                console.log(`Found principal payment (before interest, payment range): $${value}`);
+                                break;
+                            }
                         }
                     }
                 }
