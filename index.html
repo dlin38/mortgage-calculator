@@ -891,7 +891,7 @@
         function calculateMortgage() {
             const principal = parseFloat(document.getElementById('principal').value);
             const rate = parseFloat(document.getElementById('rate').value) / 100 / 12;
-            let years = parseFloat(document.getElementById('years').value);
+            const years = parseFloat(document.getElementById('years').value);
             const originalYears = parseFloat(document.getElementById('original-years').value) || null;
             const escrow = parseFloat(document.getElementById('escrow').value) || 0;
             let extra = parseFloat(document.getElementById('extra').value) || 0;
@@ -904,30 +904,8 @@
                 return;
             }
             
-            // If user provided current payment breakdown, calculate remaining term and detect extra payment
-            if (currentPrincipalPayment && currentInterestPayment) {
-                const totalPayment = currentPrincipalPayment + currentInterestPayment;
-                
-                // Calculate expected interest based on current balance
-                const expectedInterest = principal * rate;
-                const standardPrincipal = totalPayment - expectedInterest;
-                
-                // Detect extra payment
-                if (currentPrincipalPayment > standardPrincipal + 50) {
-                    extra = Math.round(currentPrincipalPayment - standardPrincipal);
-                    document.getElementById('extra').value = extra;
-                    console.log('Auto-detected extra payment:', extra);
-                }
-                
-                // Calculate remaining term using standard payment
-                const standardPayment = totalPayment - extra;
-                years = calculateRemainingTerm(principal, rate, standardPayment) / 12;
-                document.getElementById('years').value = years.toFixed(1);
-                console.log('Auto-calculated remaining term:', years, 'years');
-            }
-            
             if (!years) {
-                alert('Please fill in remaining term, or provide current payment breakdown to calculate it.');
+                alert('Please fill in Remaining Term.\n\nTip: Calculate from your original loan:\nRemaining Years = (Original Term - Payments Made) / 12\n\nExample: 30 year loan, 180 payments made:\n= (360 - 180) / 12 = 15 years remaining');
                 return;
             }
             
