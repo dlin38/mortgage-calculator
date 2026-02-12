@@ -151,6 +151,35 @@
 
             <!-- Results Section -->
             <div id="results" class="hidden">
+                <!-- Loan Progress (if calculated from statement) -->
+                <div id="loan-progress" class="hidden bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg shadow-lg p-6 mb-6">
+                    <h3 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                        <span>🎯</span>
+                        <span>Loan Progress</span>
+                    </h3>
+                    <div class="grid md:grid-cols-4 gap-4">
+                        <div>
+                            <div class="text-sm opacity-90 mb-1">Original Loan Amount</div>
+                            <div class="text-2xl font-bold" id="original-amount">--</div>
+                        </div>
+                        <div>
+                            <div class="text-sm opacity-90 mb-1">Original Term</div>
+                            <div class="text-2xl font-bold" id="original-term">--</div>
+                        </div>
+                        <div>
+                            <div class="text-sm opacity-90 mb-1">Payments Made</div>
+                            <div class="text-2xl font-bold" id="payments-made">--</div>
+                        </div>
+                        <div>
+                            <div class="text-sm opacity-90 mb-1">Principal Paid Down</div>
+                            <div class="text-2xl font-bold" id="principal-paid">--</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 bg-white bg-opacity-20 rounded p-3 text-sm">
+                        💡 Based on your current payment breakdown, we reverse-engineered your original loan details!
+                    </div>
+                </div>
+                
                 <!-- Summary Cards -->
                 <div class="grid md:grid-cols-3 gap-4 mb-6">
                     <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg shadow-lg p-6">
@@ -299,6 +328,46 @@
             
             return null;
         }
+        
+        function calculateLoanProgress(currentBalance, monthlyRate, standardPayment, remainingMonths) {
+            // Work backwards to find original loan details
+            // Try common loan terms: 30, 20, 15 years
+            
+            const commonTerms = [360, 240, 180]; // 30, 20, 15 years in months
+            let bestMatch = null;
+            
+            for (const originalTerm of commonTerms) {
+                // Calculate what the original loan amount would be for this term
+                // Using: P = L × [r(1+r)^n] / [(1+r)^n - 1]
+                // Solve for L: L = P × [(1+r)^n - 1] / [r(1+r)^n]
+                
+                const factor = Math.pow(1 + monthlyRate, originalTerm);
+                const originalAmount = standardPayment * (factor - 1) / (monthlyRate * factor);
+                
+                // Calculate how many payments have been made
+                const paymentsMade = originalTerm - remainingMonths;
+                
+                // Calculate principal paid down
+                const principalPaid = originalAmount - currentBalance;
+                
+                // Sanity check: payments made should be positive and reasonable
+                if (paymentsMade > 0 && paymentsMade < originalTerm && principalPaid > 0) {
+                    // This could be the original term
+                    // Prefer the term that results in a positive, reasonable number of payments made
+                    if (!bestMatch || Math.abs(paymentsMade - originalTerm / 2) < Math.abs(bestMatch.paymentsMade - bestMatch.originalTerm / 2)) {
+                        bestMatch = {
+                            originalAmount: Math.round(originalAmount),
+                            originalTerm: Math.round(originalTerm / 12), // Convert to years
+                            paymentsMade: Math.round(paymentsMade),
+                            principalPaid: Math.round(principalPaid),
+                            percentComplete: Math.round((paymentsMade / originalTerm) * 100)
+                        };
+                    }
+                }
+            }
+            
+            return bestMatch;
+        }
 
         async function handleFileUpload(event) {
             console.log('=== FILE UPLOAD STARTED ===');
@@ -356,6 +425,7 @@
                 // Calculate remaining term and detect extra payments
                 let calculatedTerm = null;
                 let detectedExtraPayment = 0;
+                let loanProgress = null;
                 
                 if (parsed.principal && parsed.rate && parsed.currentPrincipalPayment && parsed.currentInterestPayment) {
                     const monthlyRate = parsed.rate / 100 / 12;
@@ -378,6 +448,14 @@
                         // There's an extra payment (allow $50 buffer for rounding)
                         detectedExtraPayment = Math.round(parsed.currentPrincipalPayment - standardPrincipal);
                     }
+                    
+                    // Calculate original loan details
+                    loanProgress = calculateLoanProgress(
+                        parsed.principal,
+                        monthlyRate,
+                        totalPayment - detectedExtraPayment, // Use standard payment (without extra)
+                        calculatedTerm
+                    );
                 }
                 
                 if (parsed.principal) document.getElementById('principal').value = parsed.principal;
@@ -388,6 +466,15 @@
                 
                 document.getElementById('upload-status').classList.add('hidden');
                 document.getElementById('extracted-preview').classList.remove('hidden');
+                
+                // Show loan progress if calculated
+                if (loanProgress) {
+                    document.getElementById('loan-progress').classList.remove('hidden');
+                    document.getElementById('original-amount').textContent = '$' + loanProgress.originalAmount.toLocaleString();
+                    document.getElementById('original-term').textContent = loanProgress.originalTerm + ' years';
+                    document.getElementById('payments-made').textContent = loanProgress.paymentsMade + ' months';
+                    document.getElementById('principal-paid').textContent = '$' + loanProgress.principalPaid.toLocaleString();
+                }
                 
                 let extractedInfo = '';
                 
