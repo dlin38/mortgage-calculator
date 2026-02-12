@@ -333,6 +333,12 @@
             // Work backwards to find original loan details
             // Try common loan terms: 30, 20, 15 years
             
+            console.log('=== Calculating Loan Progress ===');
+            console.log('Current balance:', currentBalance);
+            console.log('Monthly rate:', monthlyRate);
+            console.log('Standard payment:', standardPayment);
+            console.log('Remaining months:', remainingMonths);
+            
             const commonTerms = [360, 240, 180]; // 30, 20, 15 years in months
             let bestMatch = null;
             
@@ -350,6 +356,11 @@
                 // Calculate principal paid down
                 const principalPaid = originalAmount - currentBalance;
                 
+                console.log(`\nTrying ${originalTerm / 12}-year term:`);
+                console.log('  Original amount:', Math.round(originalAmount));
+                console.log('  Payments made:', Math.round(paymentsMade));
+                console.log('  Principal paid:', Math.round(principalPaid));
+                
                 // Sanity check: payments made should be positive and reasonable
                 if (paymentsMade > 0 && paymentsMade < originalTerm && principalPaid > 0) {
                     // This could be the original term
@@ -366,6 +377,7 @@
                 }
             }
             
+            console.log('\n✓ Best match:', bestMatch);
             return bestMatch;
         }
 
@@ -431,13 +443,7 @@
                     const monthlyRate = parsed.rate / 100 / 12;
                     const totalPayment = parsed.currentPrincipalPayment + parsed.currentInterestPayment;
                     
-                    calculatedTerm = calculateRemainingTerm(
-                        parsed.principal,
-                        monthlyRate,
-                        totalPayment
-                    );
-                    
-                    // Calculate what the STANDARD principal payment should be
+                    // First, calculate what the STANDARD principal payment should be
                     // Standard = Total Payment - Interest
                     // Where Interest = Balance × Monthly Rate
                     const expectedInterest = parsed.principal * monthlyRate;
@@ -449,11 +455,19 @@
                         detectedExtraPayment = Math.round(parsed.currentPrincipalPayment - standardPrincipal);
                     }
                     
-                    // Calculate original loan details
+                    // Calculate remaining term using STANDARD payment (without extra)
+                    const standardPayment = totalPayment - detectedExtraPayment;
+                    calculatedTerm = calculateRemainingTerm(
+                        parsed.principal,
+                        monthlyRate,
+                        standardPayment
+                    );
+                    
+                    // Calculate original loan details using standard payment
                     loanProgress = calculateLoanProgress(
                         parsed.principal,
                         monthlyRate,
-                        totalPayment - detectedExtraPayment, // Use standard payment (without extra)
+                        standardPayment,
                         calculatedTerm
                     );
                 }
