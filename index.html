@@ -932,8 +932,25 @@
             }
             
             // Calculate standard payment (without extra)
+            // If user provided current payment breakdown, use that instead of recalculating
+            let standardPayment;
+            if (currentPrincipalPayment && currentInterestPayment) {
+                // Use the actual payment from statement (minus detected extra)
+                const actualTotal = currentPrincipalPayment + currentInterestPayment;
+                standardPayment = actualTotal - extra;
+                console.log('Using actual payment from statement:', {
+                    actualTotal: actualTotal.toFixed(2),
+                    detectedExtra: extra.toFixed(2),
+                    standardPayment: standardPayment.toFixed(2)
+                });
+            } else {
+                // Calculate based on remaining balance and term
+                const months = years * 12;
+                standardPayment = principal * (rate * Math.pow(1 + rate, months)) / (Math.pow(1 + rate, months) - 1);
+                console.log('Calculated standard payment from balance/term:', standardPayment.toFixed(2));
+            }
+            
             const months = years * 12;
-            const standardPayment = principal * (rate * Math.pow(1 + rate, months)) / (Math.pow(1 + rate, months) - 1);
             
             // Calculate standard schedule (for comparison)
             let standardBalance = principal;
