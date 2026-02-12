@@ -313,21 +313,47 @@
             const years = parseFloat(document.getElementById('years').value);
             const escrow = parseFloat(document.getElementById('escrow').value) || 0;
             
-            if (!principal || !rate || !years) {
-                alert('Please fill in principal, rate, and term first.');
+            if (!principal || !rate) {
+                alert('Please fill in principal balance and interest rate first.');
                 return;
             }
             
             // Calculate standard payment
-            const months = years * 12;
-            const standardPayment = principal * (rate * Math.pow(1 + rate, months)) / (Math.pow(1 + rate, months) - 1);
+            // If we have years, use it; otherwise calculate from payment breakdown
+            let standardPayment;
+            if (years) {
+                const months = years * 12;
+                standardPayment = principal * (rate * Math.pow(1 + rate, months)) / (Math.pow(1 + rate, months) - 1);
+            } else {
+                // Try to get from current payment breakdown
+                const currentPrincipal = parseFloat(document.getElementById('current-principal').value);
+                const currentInterest = parseFloat(document.getElementById('current-interest').value);
+                if (currentPrincipal && currentInterest) {
+                    standardPayment = currentPrincipal + currentInterest;
+                    // Remove any existing extra from current principal
+                    const expectedInterest = principal * rate;
+                    standardPayment = (currentPrincipal + currentInterest) - (currentPrincipal - (standardPayment - expectedInterest));
+                } else {
+                    alert('Please fill in remaining term or current payment breakdown first.');
+                    return;
+                }
+            }
+            
             const totalStandardPayment = standardPayment + escrow;
             
             // Calculate extra
             const extra = roundUpAmount - totalStandardPayment;
             
+            console.log('Round-up calculation:', {
+                roundUpAmount,
+                standardPayment: standardPayment.toFixed(2),
+                escrow: escrow.toFixed(2),
+                totalStandard: totalStandardPayment.toFixed(2),
+                extra: extra.toFixed(2)
+            });
+            
             if (extra < 0) {
-                alert(`Round-up amount ($${roundUpAmount.toLocaleString()}) is less than standard payment ($${totalStandardPayment.toLocaleString()})`);
+                alert(`Round-up amount ($${roundUpAmount.toLocaleString()}) is less than standard payment ($${totalStandardPayment.toFixed(2)})`);
                 document.getElementById('roundup').value = '';
                 return;
             }
@@ -920,6 +946,12 @@
             }
             
             // Calculate prepayment schedule
+            console.log('=== Prepayment Schedule Calculation ===');
+            console.log('Standard payment:', standardPayment.toFixed(2));
+            console.log('Extra payment:', extra.toFixed(2));
+            console.log('Lump sum:', lumpsum.toFixed(2));
+            console.log('Total monthly payment:', (standardPayment + extra + escrow).toFixed(2));
+            
             scheduleData = [];
             let balance = principal;
             let totalInterest = 0;
@@ -962,6 +994,12 @@
                 
                 month++;
             }
+            
+            console.log('Schedule complete:', {
+                months: month,
+                totalInterest: totalInterest.toFixed(2),
+                totalPrincipal: totalPrincipal.toFixed(2)
+            });
             
             // Display summary
             const finalDate = scheduleData[scheduleData.length - 1].date;
