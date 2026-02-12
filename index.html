@@ -467,7 +467,19 @@
                 }
             }
             
-            // Fallback: Look for largest dollar amount (likely the principal)
+            // Fallback 1: Look in "ACCOUNT INFORMATION" section for largest amount
+            if (!parsed.principal) {
+                const accountInfoMatch = originalText.match(/ACCOUNT INFORMATION[\s\S]{0,500}?(\$[\d,]+\.?\d{0,2})/i);
+                if (accountInfoMatch) {
+                    const value = parseFloat(accountInfoMatch[1].replace(/[$,]/g, ''));
+                    if (value > 10000 && value < 1000000) {
+                        parsed.principal = Math.round(value);
+                        console.log(`Found principal (account info section): $${value}`);
+                    }
+                }
+            }
+            
+            // Fallback 2: Look for largest dollar amount (likely the principal)
             if (!parsed.principal) {
                 const allDollarAmounts = originalText.match(/\$\s*([\d,]+\.?\d{0,2})/g);
                 if (allDollarAmounts) {
@@ -476,7 +488,7 @@
                         .filter(a => a > 10000 && a < 1000000);
                     if (amounts.length > 0) {
                         parsed.principal = Math.round(Math.max(...amounts));
-                        console.log(`Found principal (fallback): $${parsed.principal}`);
+                        console.log(`Found principal (largest amount fallback): $${parsed.principal}`);
                     }
                 }
             }
@@ -529,10 +541,23 @@
                 const match = originalText.match(pattern);
                 if (match) {
                     const value = parseFloat(match[1].replace(/,/g, ''));
-                    // Sanity check: escrow typically < $5,000/month
-                    if (value > 0 && value < 5000) {
+                    // Sanity check: escrow typically < $10,000/month (increased for flexibility)
+                    if (value > 0 && value < 10000) {
                         parsed.escrow = Math.round(value);
+                        console.log(`Found escrow: $${value} using pattern: ${pattern}`);
                         break;
+                    }
+                }
+            }
+            
+            // Fallback: Look for "Escrow Balance" followed by any $ amount
+            if (!parsed.escrow) {
+                const escrowMatch = originalText.match(/escrow\s+balance[:\s]+\$\s*([\d,]+\.?\d*)/i);
+                if (escrowMatch) {
+                    const value = parseFloat(escrowMatch[1].replace(/,/g, ''));
+                    if (value > 0 && value < 10000) {
+                        parsed.escrow = Math.round(value);
+                        console.log(`Found escrow (fallback): $${value}`);
                     }
                 }
             }
@@ -600,7 +625,7 @@
                     if (/explanation\s+of\s+amount/i.test(line)) {
                         // Look in next few lines
                         const sectionText = lines.slice(i, Math.min(i + 10, lines.length)).join(' ');
-                        const pMatch = sectionText.match(/(?:principal|pencial)[:\s]+\$?([\d,]+\.[\d]{2})/i);
+                        const pMatch = sectionText.match(/(?:principal|pencial|prncoat)[:\s]+\$?([\d,]+\.[\d]{2})/i);
                         const iMatch = sectionText.match(/interest[:\s]+\$?([\d,]+\.[\d]{2})/i);
                         
                         if (pMatch && iMatch) {
@@ -613,6 +638,28 @@
                                 console.log(`Found payments (explanation section) - Principal: $${p}, Interest: $${i}`);
                                 break;
                             }
+                        }
+                    }
+                }
+            }
+            
+            // Fallback: Just find Interest amount and look for nearby principal
+            if (!parsed.currentInterestPayment) {
+                const interestMatch = originalText.match(/interest[:\s]+\$\s*([\d,]+\.[\d]{2})/i);
+                if (interestMatch) {
+                    parsed.currentInterestPayment = parseFloat(interestMatch[1].replace(/,/g, ''));
+                    console.log(`Found interest (simple match): $${parsed.currentInterestPayment}`);
+                    
+                    // Now look for a dollar amount before "Interest" in reasonable range
+                    const beforeInterest = originalText.substring(Math.max(0, originalText.indexOf('Interest') - 200), originalText.indexOf('Interest'));
+                    const amounts = beforeInterest.match(/\$\s*([\d,]+\.[\d]{2})/g);
+                    if (amounts && amounts.length > 0) {
+                        // Take the last amount before "Interest"
+                        const lastAmount = amounts[amounts.length - 1];
+                        const value = parseFloat(lastAmount.replace(/[$,\s]/g, ''));
+                        if (value > 100 && value < 10000) {
+                            parsed.currentPrincipalPayment = value;
+                            console.log(`Found principal payment (before interest): $${value}`);
                         }
                     }
                 }
