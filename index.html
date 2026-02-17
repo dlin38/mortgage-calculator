@@ -37,16 +37,162 @@
             <div class="container mx-auto px-4">
                 <h1 class="text-4xl font-bold mb-2 flex items-center gap-3">
                     <span>🏠</span>
-                    <span>Smart Mortgage Calculator</span>
+                    <span>Mortgage Prepayment Calculator</span>
                 </h1>
-                <p class="text-purple-100">Upload your statement or enter details manually</p>
+                <p class="text-purple-100">Calculate when your loan will be paid off and how much interest you'll save</p>
             </div>
         </header>
 
         <div class="container mx-auto px-4 py-8 max-w-6xl">
-            <!-- Upload Section -->
+            <!-- Manual Input Section - Primary Focus -->
             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                <h2 class="text-2xl font-bold mb-4">📄 Upload Mortgage Statement (Optional)</h2>
+                <h2 class="text-2xl font-bold mb-4">📊 Enter Loan Information</h2>
+                
+                <div class="space-y-6">
+                    <!-- Basic Loan Information Section -->
+                    <div>
+                        <h4 class="font-semibold text-gray-700 mb-3 text-lg">1. Basic Loan Information *</h4>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Current Principal Balance *</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-3 text-gray-500">$</span>
+                                    <input type="number" id="principal" class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="e.g. 244553" value="" required>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">Current amount you owe</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Interest Rate (Annual) *</label>
+                                <div class="relative">
+                                    <input type="number" step="0.01" id="rate" class="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="e.g. 3.875" value="" required>
+                                    <span class="absolute right-3 top-3 text-gray-500">%</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">Annual interest rate</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Remaining Term (Years) *</label>
+                                <input type="number" id="years" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="e.g. 15" value="" required>
+                                <p class="text-xs text-gray-500 mt-1">Years remaining on loan</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Monthly Escrow (Optional)</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-3 text-gray-500">$</span>
+                                    <input type="number" id="escrow" class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="e.g. 500" value="0">
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">Taxes & insurance (doesn't affect payoff)</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Current Statement Date *</label>
+                                <input type="date" id="statement-date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" value="" required>
+                                <p class="text-xs text-gray-500 mt-1">Date of your current mortgage statement (used as reference date)</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Loan Start Date (Optional)</label>
+                                <input type="date" id="loan-start-date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" value="">
+                                <p class="text-xs text-gray-500 mt-1">When the loan was originally started</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Current Payment Information Section -->
+                    <div>
+                        <h4 class="font-semibold text-gray-700 mb-3 text-lg">2. Current Payment Information (Optional)</h4>
+                        <p class="text-sm text-gray-600 mb-3">Enter your current monthly payment breakdown to help calculate more accurately</p>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Principal Portion This Month</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-3 text-gray-500">$</span>
+                                    <input type="number" step="0.01" id="current-principal" class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="e.g. 1572.85" value="">
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">From your latest statement</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Interest Portion This Month</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-3 text-gray-500">$</span>
+                                    <input type="number" step="0.01" id="current-interest" class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="e.g. 794.78" value="">
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">From your latest statement</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Additional Principal Payments Section -->
+                    <div>
+                        <h4 class="font-semibold text-gray-700 mb-3 text-lg">3. Additional Principal Payments</h4>
+                        <p class="text-sm text-gray-600 mb-3">Enter any extra principal payments you plan to make (leave as 0 if none)</p>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Additional Monthly Principal Payment</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-3 text-gray-500">$</span>
+                                    <input type="number" id="extra" class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="0" value="0">
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">Extra principal you'll pay each month</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">One-Time Lump Sum Payment</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-3 text-gray-500">$</span>
+                                    <input type="number" id="lumpsum" class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="0" value="0">
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">One-time extra payment (applied to first month)</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Target Payoff Date Calculator -->
+                    <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-6">
+                        <h4 class="font-semibold text-gray-700 mb-3 text-lg">🎯 Calculate Required Payment for Target Date</h4>
+                        <p class="text-sm text-gray-600 mb-4">Want to pay off by a specific date? Enter your target date and we'll calculate the required monthly extra payment.</p>
+                        <div class="grid md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Target Payoff Date</label>
+                                <input type="date" id="target-payoff-date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <p class="text-xs text-gray-500 mt-1">When you want to pay off the loan</p>
+                            </div>
+                            <div class="flex items-end">
+                                <button onclick="calculateRequiredPayment()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition">
+                                    Calculate Required Payment
+                                </button>
+                            </div>
+                        </div>
+                        <div id="required-payment-result" class="hidden bg-white border border-blue-300 rounded-lg p-4">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-2xl">💰</span>
+                                <span class="font-semibold text-gray-800">Required Monthly Extra Payment:</span>
+                            </div>
+                            <div class="text-3xl font-bold text-blue-600 mb-2" id="required-payment-amount">--</div>
+                            <p class="text-sm text-gray-600" id="required-payment-details">--</p>
+                            <button onclick="applyRequiredPayment()" class="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+                                Apply This Amount to Form
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <button onclick="calculateMortgage()" class="w-full mt-6 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white py-3 rounded-lg font-semibold text-lg transition shadow-lg">
+                    Calculate Payoff Date & Interest Saved 🚀
+                </button>
+                <div class="mt-3 text-center">
+                    <button onclick="clearFormData(event)" class="text-sm text-gray-500 hover:text-gray-700 underline">
+                        Clear Saved Data
+                    </button>
+                </div>
+            </div>
+
+            <!-- Upload Section - Optional/Collapsible -->
+            <details class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <summary class="cursor-pointer text-lg font-semibold text-gray-700 mb-4">📄 Upload Statement (Optional - Auto-fill from image)</summary>
                 <p class="text-gray-600 mb-4">Take a photo or upload a PDF/image of your latest statement. We'll extract the details automatically.</p>
                 
                 <div class="flex flex-wrap gap-3 mb-4">
@@ -79,124 +225,62 @@
                         <div class="text-sm text-green-700" id="extracted-text"></div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Manual Input Section -->
-            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                <h2 class="text-2xl font-bold mb-4">📊 Mortgage Details</h2>
-                
-                <div class="space-y-6">
-                    <!-- Basic Info Section -->
-                    <div>
-                        <h4 class="font-semibold text-gray-700 mb-3">📋 Basic Information</h4>
-                        <div class="grid md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Current Principal Balance *</label>
-                                <div class="relative">
-                                    <span class="absolute left-3 top-3 text-gray-500">$</span>
-                                    <input type="number" id="principal" class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="244553" value="">
-                                </div>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Interest Rate *</label>
-                                <div class="relative">
-                                    <input type="number" step="0.01" id="rate" class="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="3.875" value="">
-                                    <span class="absolute right-3 top-3 text-gray-500">%</span>
-                                </div>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
-                                    Remaining Term (Years)
-                                    <span class="text-xs text-gray-500">(or fill payment breakdown)</span>
-                                </label>
-                                <input type="number" id="years" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="15" value="">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
-                                    Original Term (Years)
-                                    <span class="text-xs text-gray-500">(optional)</span>
-                                </label>
-                                <input type="number" id="original-years" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="30" value="">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Monthly Escrow</label>
-                                <div class="relative">
-                                    <span class="absolute left-3 top-3 text-gray-500">$</span>
-                                    <input type="number" id="escrow" class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="5685" value="">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Current Payment Breakdown Section -->
-                    <div>
-                        <h4 class="font-semibold text-gray-700 mb-3">💰 This Month's Payment Breakdown (Optional)</h4>
-                        <p class="text-sm text-gray-600 mb-3">Enter from your statement to auto-detect extra payments and calculate remaining term</p>
-                        <div class="grid md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Principal Payment</label>
-                                <div class="relative">
-                                    <span class="absolute left-3 top-3 text-gray-500">$</span>
-                                    <input type="number" step="0.01" id="current-principal" class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="1572.85" value="">
-                                </div>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Interest Payment</label>
-                                <div class="relative">
-                                    <span class="absolute left-3 top-3 text-gray-500">$</span>
-                                    <input type="number" step="0.01" id="current-interest" class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="794.78" value="">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Extra Payments Section -->
-                    <div>
-                        <h4 class="font-semibold text-gray-700 mb-3">🚀 Extra Payments</h4>
-                        <div class="grid md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Extra Monthly Payment</label>
-                        <div class="relative">
-                            <span class="absolute left-3 top-3 text-gray-500">$</span>
-                            <input type="number" id="extra" class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="0" value="0" onchange="clearRoundUp()">
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Round Up Payment To
-                            <span class="text-xs text-gray-500">(alternative)</span>
-                        </label>
-                        <div class="relative">
-                            <span class="absolute left-3 top-3 text-gray-500">$</span>
-                            <input type="number" id="roundup" class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="e.g. 4000" value="" onchange="calculateExtraFromRoundUp()">
-                        </div>
-                        <p class="text-xs text-gray-500 mt-1">Calculator will determine extra payment needed</p>
-                    </div>
-                    
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">One-Time Extra Payment</label>
-                                <div class="relative">
-                                    <span class="absolute left-3 top-3 text-gray-500">$</span>
-                                    <input type="number" id="lumpsum" class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="0" value="">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <button onclick="calculateMortgage()" class="w-full mt-6 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white py-3 rounded-lg font-semibold text-lg transition shadow-lg">
-                    Calculate Prepayment Schedule 🚀
-                </button>
-            </div>
+            </details>
 
             <!-- Results Section -->
             <div id="results" class="hidden">
+                <!-- Main Results - Key Calculations -->
+                <div class="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg shadow-xl p-8 mb-6">
+                    <h2 class="text-3xl font-bold mb-6 text-center">📊 Calculation Results</h2>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-white bg-opacity-20 rounded-lg p-6 backdrop-blur-sm">
+                            <div class="text-lg opacity-90 mb-2">Loan Will Be Fully Paid On</div>
+                            <div class="text-4xl font-bold mb-2" id="payoff-date">--</div>
+                            <div class="text-sm opacity-90" id="time-saved">--</div>
+                        </div>
+                        
+                        <div class="bg-white bg-opacity-20 rounded-lg p-6 backdrop-blur-sm">
+                            <div class="text-lg opacity-90 mb-2">Total Interest Payment Saved</div>
+                            <div class="text-4xl font-bold mb-2" id="interest-saved">--</div>
+                            <div class="text-sm opacity-90">Compared to standard payment schedule</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loan Information (if start date provided) -->
+                <div id="loan-info" class="hidden bg-gray-100 rounded-lg shadow-md p-6 mb-6">
+                    <h3 class="text-xl font-bold mb-4">📅 Loan Information</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <div class="text-sm text-gray-600 mb-1">Loan Start Date</div>
+                            <div class="text-lg font-semibold text-gray-800" id="display-loan-start-date">--</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-600 mb-1">Months Since Loan Start</div>
+                            <div class="text-lg font-semibold text-gray-800" id="months-since-start">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Summary Cards -->
+                <div class="grid md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg shadow-lg p-6">
+                        <div class="text-sm opacity-90 mb-1">Months to Payoff</div>
+                        <div class="text-2xl font-bold" id="months-to-payoff">--</div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-lg p-6">
+                        <div class="text-sm opacity-90 mb-1">Total Interest Paid</div>
+                        <div class="text-2xl font-bold" id="total-interest-paid">--</div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg shadow-lg p-6">
+                        <div class="text-sm opacity-90 mb-1">Total Amount Paid</div>
+                        <div class="text-2xl font-bold" id="total-paid">--</div>
+                        <div class="text-xs opacity-90 mt-1">Principal + Interest</div>
+                    </div>
+                </div>
+
                 <!-- Loan Progress (if calculated from statement) -->
                 <div id="loan-progress" class="hidden bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg shadow-lg p-6 mb-6">
                     <h3 class="text-2xl font-bold mb-4 flex items-center gap-2">
@@ -223,27 +307,6 @@
                     </div>
                     <div class="mt-4 bg-white bg-opacity-20 rounded p-3 text-sm">
                         💡 Based on your current payment breakdown, we reverse-engineered your original loan details!
-                    </div>
-                </div>
-                
-                <!-- Summary Cards -->
-                <div class="grid md:grid-cols-3 gap-4 mb-6">
-                    <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg shadow-lg p-6">
-                        <div class="text-sm opacity-90 mb-1">New Payoff Date</div>
-                        <div class="text-3xl font-bold" id="payoff-date">--</div>
-                        <div class="text-sm opacity-90 mt-2" id="time-saved">--</div>
-                    </div>
-                    
-                    <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-lg p-6">
-                        <div class="text-sm opacity-90 mb-1">Interest Saved</div>
-                        <div class="text-3xl font-bold" id="interest-saved">--</div>
-                        <div class="text-sm opacity-90 mt-2">vs. standard payment</div>
-                    </div>
-                    
-                    <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg shadow-lg p-6">
-                        <div class="text-sm opacity-90 mb-1">Total Paid</div>
-                        <div class="text-3xl font-bold" id="total-paid">--</div>
-                        <div class="text-sm opacity-90 mt-2">Principal + Interest</div>
                     </div>
                 </div>
 
@@ -282,6 +345,7 @@
                                     <th class="py-2 px-3">Principal</th>
                                     <th class="py-2 px-3">Interest</th>
                                     <th class="py-2 px-3">Extra</th>
+                                    <th class="py-2 px-3">Total Payment</th>
                                     <th class="py-2 px-3">Balance</th>
                                 </tr>
                             </thead>
@@ -303,6 +367,348 @@
         
         let scheduleData = [];
         let chart = null;
+        
+        // Form data caching functions
+        function saveFormData() {
+            const formData = {
+                principal: document.getElementById('principal').value,
+                rate: document.getElementById('rate').value,
+                years: document.getElementById('years').value,
+                escrow: document.getElementById('escrow').value,
+                currentPrincipal: document.getElementById('current-principal').value,
+                currentInterest: document.getElementById('current-interest').value,
+                extra: document.getElementById('extra').value,
+                lumpsum: document.getElementById('lumpsum').value,
+                loanStartDate: document.getElementById('loan-start-date').value,
+                statementDate: document.getElementById('statement-date').value,
+                targetPayoffDate: document.getElementById('target-payoff-date').value
+            };
+            localStorage.setItem('mortgageCalculatorData', JSON.stringify(formData));
+            console.log('Form data saved to localStorage');
+        }
+        
+        function loadFormData() {
+            try {
+                const savedData = localStorage.getItem('mortgageCalculatorData');
+                const statementDateField = document.getElementById('statement-date');
+                
+                if (savedData) {
+                    const formData = JSON.parse(savedData);
+                    
+                    if (formData.principal) document.getElementById('principal').value = formData.principal;
+                    if (formData.rate) document.getElementById('rate').value = formData.rate;
+                    if (formData.years) document.getElementById('years').value = formData.years;
+                    if (formData.escrow) document.getElementById('escrow').value = formData.escrow;
+                    if (formData.currentPrincipal) document.getElementById('current-principal').value = formData.currentPrincipal;
+                    if (formData.currentInterest) document.getElementById('current-interest').value = formData.currentInterest;
+                    if (formData.extra) document.getElementById('extra').value = formData.extra;
+                    if (formData.lumpsum) document.getElementById('lumpsum').value = formData.lumpsum;
+                    if (formData.loanStartDate) document.getElementById('loan-start-date').value = formData.loanStartDate;
+                    if (formData.statementDate) {
+                        statementDateField.value = formData.statementDate;
+                    } else if (statementDateField && !statementDateField.value) {
+                        // Set default to today if not saved
+                        const today = new Date();
+                        statementDateField.value = today.toISOString().split('T')[0];
+                    }
+                    if (formData.targetPayoffDate) document.getElementById('target-payoff-date').value = formData.targetPayoffDate;
+                    
+                    console.log('Form data loaded from localStorage');
+                } else if (statementDateField && !statementDateField.value) {
+                    // Set default to today if no saved data
+                    const today = new Date();
+                    statementDateField.value = today.toISOString().split('T')[0];
+                }
+            } catch (e) {
+                console.error('Error loading form data:', e);
+            }
+        }
+        
+        function clearFormData(event) {
+            localStorage.removeItem('mortgageCalculatorData');
+            
+            // Clear all form fields
+            document.getElementById('principal').value = '';
+            document.getElementById('rate').value = '';
+            document.getElementById('years').value = '';
+            document.getElementById('escrow').value = '';
+            document.getElementById('current-principal').value = '';
+            document.getElementById('current-interest').value = '';
+            document.getElementById('extra').value = '0';
+            document.getElementById('lumpsum').value = '0';
+            const loanStartDateField = document.getElementById('loan-start-date');
+            if (loanStartDateField) loanStartDateField.value = '';
+            const statementDateField = document.getElementById('statement-date');
+            if (statementDateField) {
+                // Reset to today's date
+                const today = new Date();
+                statementDateField.value = today.toISOString().split('T')[0];
+            }
+            const targetPayoffDateField = document.getElementById('target-payoff-date');
+            if (targetPayoffDateField) targetPayoffDateField.value = '';
+            
+            // Hide required payment result
+            const requiredPaymentResult = document.getElementById('required-payment-result');
+            if (requiredPaymentResult) requiredPaymentResult.classList.add('hidden');
+            
+            console.log('Form data cleared from localStorage and form fields reset');
+            
+            // Show a brief confirmation
+            if (event && event.target) {
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = '✓ Cleared!';
+                button.classList.add('text-green-600');
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('text-green-600');
+                }, 2000);
+            }
+        }
+        
+        // Calculate required monthly payment to reach target payoff date
+        function calculateRequiredPayment() {
+            // Get loan parameters
+            const principal = parseFloat(document.getElementById('principal').value);
+            const rateInput = parseFloat(document.getElementById('rate').value);
+            const rate = rateInput / 100 / 12; // Monthly rate
+            const years = parseFloat(document.getElementById('years').value);
+            const escrow = parseFloat(document.getElementById('escrow').value) || 0;
+            const currentPrincipalPayment = parseFloat(document.getElementById('current-principal').value) || null;
+            const currentInterestPayment = parseFloat(document.getElementById('current-interest').value) || null;
+            const targetDateInput = document.getElementById('target-payoff-date').value;
+            
+            // Validate inputs
+            if (!principal || principal <= 0) {
+                alert('Please enter a valid Current Principal Balance first.');
+                document.getElementById('principal').focus();
+                return;
+            }
+            
+            if (!rateInput || rateInput <= 0) {
+                alert('Please enter a valid Interest Rate first.');
+                document.getElementById('rate').focus();
+                return;
+            }
+            
+            if (!targetDateInput) {
+                alert('Please select a Target Payoff Date.');
+                document.getElementById('target-payoff-date').focus();
+                return;
+            }
+            
+            // Calculate standard payment
+            let standardPayment;
+            if (currentPrincipalPayment && currentInterestPayment) {
+                standardPayment = currentPrincipalPayment + currentInterestPayment;
+            } else if (years) {
+                const months = years * 12;
+                standardPayment = principal * (rate * Math.pow(1 + rate, months)) / (Math.pow(1 + rate, months) - 1);
+            } else {
+                alert('Please enter either Remaining Term or Current Payment Information.');
+                return;
+            }
+            
+            // Get current date (statement date or today)
+            const statementDateElement = document.getElementById('statement-date');
+            const statementDateInput = statementDateElement ? statementDateElement.value : '';
+            let currentDate;
+            if (statementDateInput) {
+                currentDate = new Date(statementDateInput);
+                currentDate.setHours(0, 0, 0, 0);
+            } else {
+                currentDate = new Date();
+                currentDate.setHours(0, 0, 0, 0);
+            }
+            
+            // Calculate months until target date
+            const targetDate = new Date(targetDateInput);
+            targetDate.setHours(0, 0, 0, 0);
+            
+            if (targetDate <= currentDate) {
+                alert('Target date must be after the Current Statement Date.');
+                return;
+            }
+            
+            const monthsUntilTarget = Math.ceil((targetDate - currentDate) / (1000 * 60 * 60 * 24 * 30.44)); // Average days per month
+            
+            if (monthsUntilTarget <= 0) {
+                alert('Target date must be at least 1 month in the future.');
+                return;
+            }
+            
+            // Use binary search to find required extra payment
+            let minExtra = 0;
+            let maxExtra = principal; // Upper bound: can't pay more than principal
+            let requiredExtra = 0;
+            const tolerance = 0.01; // $0.01 tolerance
+            
+            // First check if it's even possible with no extra payment
+            let testBalance = principal;
+            let testMonths = 0;
+            while (testBalance > 0 && testMonths < monthsUntilTarget) {
+                const interest = testBalance * rate;
+                const principalPayment = standardPayment - interest;
+                testBalance -= principalPayment;
+                testMonths++;
+            }
+            
+            if (testBalance <= 0 && testMonths <= monthsUntilTarget) {
+                // Can pay off without extra payment
+                requiredExtra = 0;
+            } else {
+                // Need extra payment - use binary search
+                let foundSolution = false;
+                while (maxExtra - minExtra > tolerance) {
+                    const testExtra = (minExtra + maxExtra) / 2;
+                    
+                    // Simulate loan payoff with this extra payment
+                    testBalance = principal;
+                    testMonths = 0;
+                    
+                    while (testBalance > 0 && testMonths < monthsUntilTarget * 2) { // Safety limit
+                        const interest = testBalance * rate;
+                        const principalPayment = standardPayment - interest;
+                        const extraPayment = testExtra;
+                        
+                        if (principalPayment + extraPayment > testBalance) {
+                            testBalance = 0;
+                        } else {
+                            testBalance -= (principalPayment + extraPayment);
+                        }
+                        testMonths++;
+                    }
+                    
+                    if (testBalance <= 0 && testMonths <= monthsUntilTarget) {
+                        // This extra payment works, try lower
+                        requiredExtra = testExtra;
+                        maxExtra = testExtra;
+                        foundSolution = true;
+                    } else {
+                        // Need more extra payment
+                        minExtra = testExtra;
+                    }
+                }
+                
+                // Check if solution is even possible
+                if (!foundSolution && maxExtra >= principal - tolerance) {
+                    // Test with maximum possible payment
+                    testBalance = principal;
+                    testMonths = 0;
+                    while (testBalance > 0 && testMonths < monthsUntilTarget * 2) {
+                        const interest = testBalance * rate;
+                        const principalPayment = standardPayment - interest;
+                        const extraPayment = principal; // Maximum possible
+                        
+                        if (principalPayment + extraPayment > testBalance) {
+                            testBalance = 0;
+                        } else {
+                            testBalance -= (principalPayment + extraPayment);
+                        }
+                        testMonths++;
+                    }
+                    
+                    if (testBalance > 0 || testMonths > monthsUntilTarget) {
+                        // Impossible to pay off by target date
+                        const resultDiv = document.getElementById('required-payment-result');
+                        const amountDiv = document.getElementById('required-payment-amount');
+                        const detailsDiv = document.getElementById('required-payment-details');
+                        
+                        resultDiv.classList.remove('hidden');
+                        amountDiv.textContent = 'Not Possible';
+                        amountDiv.classList.remove('text-blue-600', 'text-green-600');
+                        amountDiv.classList.add('text-red-600');
+                        detailsDiv.textContent = `It's not possible to pay off the loan by ${targetDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}. The target date is too soon. Please select a later date.`;
+                        return;
+                    }
+                }
+            }
+            
+            // Round to nearest dollar
+            requiredExtra = Math.ceil(requiredExtra);
+            
+            // Display result
+            const resultDiv = document.getElementById('required-payment-result');
+            const amountDiv = document.getElementById('required-payment-amount');
+            const detailsDiv = document.getElementById('required-payment-details');
+            
+            if (requiredExtra === 0) {
+                amountDiv.textContent = '$0';
+                amountDiv.classList.remove('text-blue-600');
+                amountDiv.classList.add('text-green-600');
+                detailsDiv.textContent = `Great news! You can pay off by ${targetDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} with your current payment schedule (${monthsUntilTarget} months).`;
+            } else {
+                amountDiv.textContent = '$' + requiredExtra.toLocaleString();
+                amountDiv.classList.remove('text-green-600');
+                amountDiv.classList.add('text-blue-600');
+                
+                // Calculate actual payoff with this payment
+                let actualBalance = principal;
+                let actualMonths = 0;
+                while (actualBalance > 0 && actualMonths < monthsUntilTarget * 2) {
+                    const interest = actualBalance * rate;
+                    const principalPayment = standardPayment - interest;
+                    const extraPayment = requiredExtra;
+                    
+                    if (principalPayment + extraPayment > actualBalance) {
+                        actualBalance = 0;
+                    } else {
+                        actualBalance -= (principalPayment + extraPayment);
+                    }
+                    actualMonths++;
+                }
+                
+                const actualPayoffDate = new Date(currentDate);
+                actualPayoffDate.setMonth(actualPayoffDate.getMonth() + actualMonths);
+                
+                detailsDiv.textContent = `By paying an extra $${requiredExtra.toLocaleString()} per month, you'll pay off by ${actualPayoffDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} (${actualMonths} months).`;
+            }
+            
+            resultDiv.classList.remove('hidden');
+            
+            // Store the required payment for the apply function
+            window.requiredExtraPayment = requiredExtra;
+        }
+        
+        // Apply the calculated required payment to the form
+        function applyRequiredPayment() {
+            if (window.requiredExtraPayment !== undefined) {
+                document.getElementById('extra').value = window.requiredExtraPayment;
+                saveFormData();
+                
+                // Show confirmation
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = '✓ Applied!';
+                button.classList.add('bg-green-600', 'hover:bg-green-700');
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('bg-green-600', 'hover:bg-green-700');
+                }, 2000);
+            }
+        }
+        
+        // Load saved data when page loads
+        window.addEventListener('DOMContentLoaded', function() {
+            loadFormData();
+            
+            // Auto-save when form fields change
+            const formFields = ['principal', 'rate', 'years', 'escrow', 'current-principal', 
+                              'current-interest', 'extra', 'lumpsum', 'loan-start-date', 'statement-date', 'target-payoff-date'];
+            
+            formFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.addEventListener('input', function() {
+                        // Debounce: save after user stops typing for 1 second
+                        clearTimeout(field.saveTimeout);
+                        field.saveTimeout = setTimeout(saveFormData, 1000);
+                    });
+                    
+                    field.addEventListener('change', saveFormData);
+                }
+            });
+        });
         
         function calculateExtraFromRoundUp() {
             const roundUpAmount = parseFloat(document.getElementById('roundup').value);
@@ -556,8 +962,14 @@
                 
                 // Auto-fill original term if we calculated loan progress
                 if (loanProgress) {
-                    document.getElementById('original-years').value = loanProgress.originalTerm;
+                    const originalYearsElement = document.getElementById('original-years');
+                    if (originalYearsElement) {
+                        originalYearsElement.value = loanProgress.originalTerm;
+                    }
                 }
+                
+                // Save the auto-filled data
+                saveFormData();
                 
                 document.getElementById('upload-status').classList.add('hidden');
                 document.getElementById('extracted-preview').classList.remove('hidden');
@@ -889,24 +1301,56 @@
         }
 
         function calculateMortgage() {
+            // Save form data before calculation
+            saveFormData();
+            
             const principal = parseFloat(document.getElementById('principal').value);
             const rate = parseFloat(document.getElementById('rate').value) / 100 / 12;
             const years = parseFloat(document.getElementById('years').value);
-            const originalYears = parseFloat(document.getElementById('original-years').value) || null;
+            const originalYearsElement = document.getElementById('original-years');
+            const originalYears = originalYearsElement ? parseFloat(originalYearsElement.value) || null : null;
             const escrow = parseFloat(document.getElementById('escrow').value) || 0;
             let extra = parseFloat(document.getElementById('extra').value) || 0;
             const lumpsum = parseFloat(document.getElementById('lumpsum').value) || 0;
             const currentPrincipalPayment = parseFloat(document.getElementById('current-principal').value) || null;
             const currentInterestPayment = parseFloat(document.getElementById('current-interest').value) || null;
+            const loanStartDateElement = document.getElementById('loan-start-date');
+            const loanStartDateInput = loanStartDateElement ? loanStartDateElement.value : '';
+            const statementDateElement = document.getElementById('statement-date');
+            const statementDateInput = statementDateElement ? statementDateElement.value : '';
             
-            if (!principal || !rate) {
-                alert('Please fill in at least principal balance and interest rate.');
+            // Validate required fields
+            if (!principal || principal <= 0) {
+                alert('Please enter a valid Current Principal Balance.');
+                document.getElementById('principal').focus();
                 return;
             }
             
-            if (!years) {
-                alert('Please fill in Remaining Term.\n\nTip: Calculate from your original loan:\nRemaining Years = (Original Term - Payments Made) / 12\n\nExample: 30 year loan, 180 payments made:\n= (360 - 180) / 12 = 15 years remaining');
+            if (!rate || rate <= 0) {
+                alert('Please enter a valid Interest Rate.');
+                document.getElementById('rate').focus();
                 return;
+            }
+            
+            if (!years || years <= 0) {
+                alert('Please enter the Remaining Term in years.\n\nThis is how many years are left on your loan.\n\nExample: If you have a 30-year loan and have made 15 years of payments, enter 15.');
+                document.getElementById('years').focus();
+                return;
+            }
+            
+            // Get current date (statement date or today)
+            let currentDate;
+            if (statementDateInput) {
+                currentDate = new Date(statementDateInput);
+                currentDate.setHours(0, 0, 0, 0);
+            } else {
+                currentDate = new Date();
+                currentDate.setHours(0, 0, 0, 0);
+                // Set default value if not provided
+                const todayStr = currentDate.toISOString().split('T')[0];
+                if (statementDateElement) {
+                    statementDateElement.value = todayStr;
+                }
             }
             
             // Calculate standard payment (without extra)
@@ -915,30 +1359,19 @@
             const months = years * 12;
             
             if (currentPrincipalPayment && currentInterestPayment) {
-                // Best case: User provided actual payment breakdown from statement
-                // This IS the original payment (the principal + interest split changes monthly, but total is fixed)
+                // User provided actual payment breakdown from statement
+                // The total payment (principal + interest) is fixed from the original loan
                 const actualTotal = currentPrincipalPayment + currentInterestPayment;
-                const expectedInterest = principal * rate;
-                const expectedPrincipal = actualTotal - expectedInterest;
                 
-                // Only auto-detect extra if user hasn't already specified it (e.g., via round-up)
-                if (!extra || extra === 0) {
-                    // Extra is the difference between actual principal and expected principal
-                    extra = Math.max(0, Math.round(currentPrincipalPayment - expectedPrincipal));
-                    document.getElementById('extra').value = extra;
-                    console.log('Auto-detected extra payment:', extra.toFixed(2));
-                } else {
-                    console.log('Using user-specified extra payment:', extra.toFixed(2));
-                }
+                // Use the actual total as the standard payment
+                // The user's extra payment input will be added on top of this
+                standardPayment = actualTotal;
                 
-                standardPayment = actualTotal - extra;
-                
-                console.log('Using actual payment from statement (THIS IS YOUR ORIGINAL PAYMENT):', {
+                console.log('Using actual payment from statement:', {
                     currentPrincipal: currentPrincipalPayment.toFixed(2),
                     currentInterest: currentInterestPayment.toFixed(2),
                     actualTotal: actualTotal.toFixed(2),
-                    expectedPrincipal: expectedPrincipal.toFixed(2),
-                    extra: extra.toFixed(2),
+                    userExtraPayment: extra.toFixed(2),
                     standardPayment: standardPayment.toFixed(2)
                 });
             } else {
@@ -975,7 +1408,21 @@
             let totalInterest = 0;
             let totalPrincipal = 0;
             let month = 0;
-            const today = new Date();
+            
+            // Determine the starting date for calculations
+            let startDate;
+            if (loanStartDateInput) {
+                // Use loan start date if provided
+                startDate = new Date(loanStartDateInput);
+                // Calculate how many months have passed since loan start to current statement date
+                const monthsSinceStart = (currentDate.getFullYear() - startDate.getFullYear()) * 12 + 
+                                       (currentDate.getMonth() - startDate.getMonth());
+                // Start from current statement month (loan start + months already passed)
+                startDate.setMonth(startDate.getMonth() + monthsSinceStart);
+            } else {
+                // Use current statement date if loan start date not provided
+                startDate = new Date(currentDate);
+            }
             
             while (balance > 0 && month < months) {
                 const interest = balance * rate;
@@ -997,13 +1444,15 @@
                 totalInterest += interest;
                 totalPrincipal += principalPayment + extraPayment;
                 
-                const date = new Date(today);
+                // Calculate date for this payment
+                const date = new Date(startDate);
                 date.setMonth(date.getMonth() + month + 1);
                 
                 scheduleData.push({
                     month: month + 1,
                     date: date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
                     payment: standardPayment + escrow,
+                    totalPayment: standardPayment + escrow + extraPayment,
                     principal: principalPayment,
                     interest: interest,
                     extra: extraPayment,
@@ -1019,16 +1468,43 @@
                 totalPrincipal: totalPrincipal.toFixed(2)
             });
             
-            // Display summary
+            // Display summary - Key Calculations
             const finalDate = scheduleData[scheduleData.length - 1].date;
+            const monthsToPayoff = month;
             const yearsSaved = ((months - month) / 12).toFixed(1);
             const interestSaved = standardTotalInterest - totalInterest;
             const totalPaid = principal + totalInterest;
             
+            // Main Results - When loan will be fully paid
             document.getElementById('payoff-date').textContent = finalDate;
-            document.getElementById('time-saved').textContent = `${yearsSaved} years earlier`;
+            document.getElementById('time-saved').textContent = monthsToPayoff === months 
+                ? 'No time saved (no extra payments)' 
+                : `${yearsSaved} years earlier than standard schedule`;
+            
+            // Main Results - Interest saved
             document.getElementById('interest-saved').textContent = '$' + interestSaved.toLocaleString(undefined, {maximumFractionDigits: 0});
+            
+            // Additional Summary
+            document.getElementById('months-to-payoff').textContent = monthsToPayoff + ' months';
+            document.getElementById('total-interest-paid').textContent = '$' + totalInterest.toLocaleString(undefined, {maximumFractionDigits: 0});
             document.getElementById('total-paid').textContent = '$' + totalPaid.toLocaleString(undefined, {maximumFractionDigits: 0});
+            
+            // Display loan information if start date provided
+            if (loanStartDateInput) {
+                const loanStartDate = new Date(loanStartDateInput);
+                const monthsSinceStart = (currentDate.getFullYear() - loanStartDate.getFullYear()) * 12 + 
+                                       (currentDate.getMonth() - loanStartDate.getMonth());
+                
+                document.getElementById('loan-info').classList.remove('hidden');
+                document.getElementById('display-loan-start-date').textContent = loanStartDate.toLocaleDateString('en-US', { 
+                    month: 'long', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                });
+                document.getElementById('months-since-start').textContent = monthsSinceStart + ' months';
+            } else {
+                document.getElementById('loan-info').classList.add('hidden');
+            }
             
             // Calculate loan progress if original term was provided
             if (originalYears) {
@@ -1082,6 +1558,7 @@
                     <td class="py-2 px-3">$${row.principal.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
                     <td class="py-2 px-3">$${row.interest.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
                     <td class="py-2 px-3 ${row.extra > 0 ? 'text-green-600 font-semibold' : ''}">$${row.extra.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
+                    <td class="py-2 px-3 font-semibold ${row.extra > 0 ? 'text-blue-600' : ''}">$${row.totalPayment.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
                     <td class="py-2 px-3 font-semibold">$${row.balance.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
                 `;
                 tbody.appendChild(tr);
@@ -1145,10 +1622,10 @@
         }
 
         function exportToCSV() {
-            let csv = 'Month,Date,Payment,Principal,Interest,Extra,Balance\n';
+            let csv = 'Month,Date,Payment,Principal,Interest,Extra,Total Payment,Balance\n';
             
             scheduleData.forEach(row => {
-                csv += `${row.month},${row.date},${row.payment.toFixed(2)},${row.principal.toFixed(2)},${row.interest.toFixed(2)},${row.extra.toFixed(2)},${row.balance.toFixed(2)}\n`;
+                csv += `${row.month},${row.date},${row.payment.toFixed(2)},${row.principal.toFixed(2)},${row.interest.toFixed(2)},${row.extra.toFixed(2)},${row.totalPayment.toFixed(2)},${row.balance.toFixed(2)}\n`;
             });
             
             const blob = new Blob([csv], { type: 'text/csv' });
